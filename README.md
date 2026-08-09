@@ -1,0 +1,376 @@
+![JavaScript](https://img.shields.io/badge/JavaScript-yellow?style=for-the-badge&logo=javascript)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.8-purple?style=for-the-badge&logo=bootstrap)
+![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%26%20Storage-orange?style=for-the-badge&logo=firebase)
+![License](https://img.shields.io/badge/license-Apache%202.0-lightgrey?style=for-the-badge)
+
+# QR E-Commerce
+
+
+A QR code-based product information system developed as a web project.
+
+The project allows an administrator to manage products through a web-based admin panel and provides a customer-facing product page that can be accessed directly through a QR code assigned to each product.
+
+The main goal of the project is to provide quick access to dynamic product information while keeping the system simple, modular, and easy to use.
+
+> **Note on Language:** While this repository and documentation are written in English, the application's user interface (UI)—including labels, buttons, stock status indicators, and date categories (SKT / TETT)—is fully presented in **Turkish** to align with its intended local market design.
+---
+
+## Features
+
+### Admin Panel
+
+The admin panel provides a single-page interface for managing products.
+
+- Add new products
+- Edit existing products
+- Delete products
+- Search products by name
+- Paginate product cards
+- Upload product images
+- Display uploaded product images
+- Generate QR codes for products
+- Manage product categories
+- Manage product prices
+- Manage product descriptions
+- Manage stock quantities
+- Define expiry date information
+- Select between SKT (Son Kullanma Tarihi) and TETT (Tavsiye Edilen Tüketim Tarihi)
+- Display the last price update date
+- Display stock status according to stock quantity
+
+<p align="center">
+<img width="%55" style="vertical-align: middle;margin-right: 10px;" alt="admin_panel" src="https://github.com/user-attachments/assets/99fa4e4d-1578-46c1-a848-77a5924aa067"/>
+</p>
+
+### Customer Product Page
+
+The customer-facing page is designed to be accessed through a product-specific QR code.
+
+The product ID is included in the URL and is used to retrieve the corresponding product information.
+
+The page can display:
+
+- Product image
+- Product name
+- Product price
+- Product category
+- Product description
+- Current stock status
+- Expiry date information
+- SKT / TETT information
+- Remaining days until the specified date
+- Last price update date
+
+The customer page is designed primarily for mobile use, since the main access method is scanning a QR code with a smartphone.
+
+<p align="center">
+  <img width="%25" style="vertical-align:middle;" alt="product_page" src="https://github.com/user-attachments/assets/1e3a552d-ca5d-4c4d-9d3a-a82087357f30" />
+</p>
+
+---
+
+## Additional Product Features
+
+The project includes several features designed to provide more meaningful information than a simple static product page.
+
+### Stock Status
+
+Stock quantity is stored as a numerical value and is converted into a visual status on both the admin and customer sides.
+
+- **More than 10:** Stock available
+- **1–10:** Critical stock
+- **0:** Out of stock
+
+The customer-facing page uses different visual indicators depending on the current stock level.
+
+### SKT / TETT Support
+
+Products can store either:
+
+- **SKT** — Son Kullanma Tarihi
+- **TETT** — Tavsiye Edilen Tüketim Tarihi
+
+The customer page calculates the remaining time and presents the corresponding information dynamically.
+
+### Expiry-Based Discount
+
+The customer page contains an additional demonstration feature based on the product's date information.
+
+Depending on the selected date type and remaining time, eligible products can display a discounted price and a promotional coupon.
+
+This feature was implemented as a project-specific concept rather than as a complete real-world payment or coupon infrastructure.
+
+### Price Update Information
+
+The system stores the date on which the product price was last updated and displays this information on the customer-facing page.
+
+### QR Code Generation
+
+Each product can have a QR code generated from its product-specific URL.
+
+The generated URL follows the general structure:
+
+`https://your-domain.com/product/product.html?id=PRODUCT_ID`
+
+**Note on Local Development & Mobile Testing:**  
+When running the project locally (e.g., via Live Server), smartphone cameras cannot resolve `localhost`. To scan and test QR codes on a physical device over the same local network, replace the base IP address in `admin/admin_script.js` with your computer's local IPv4 address (e.g., `http://192.168.1.X:5500/product/product.html?id=PRODUCT_ID`).
+
+When the QR code is scanned, the product ID is read from the URL and the corresponding product information is loaded dynamically.
+
+---
+
+## Technologies
+
+### Frontend
+
+- HTML5
+- CSS3
+- Vanilla JavaScript
+- Bootstrap
+- Bootstrap Icons
+
+The project does not use a frontend framework such as React, Vue, or Angular.
+
+The interface is built using standard HTML, CSS, and JavaScript to keep the project lightweight and straightforward.
+
+### Backend / Data Layer
+
+The project uses Firebase services for data storage and image storage.
+
+- Firebase Firestore
+- Firebase Storage
+
+Firestore is used for product data, while Firebase Storage is used for product images.
+
+There is no custom backend server or traditional SQL database in the current implementation.
+
+### QR Code
+
+- EasyQRCodeJS
+
+QR codes are generated dynamically from product-specific URLs.
+
+---
+
+## Project Structure
+
+The project is separated into two main user-facing areas:
+
+* `admin/` — Product management interface
+* `product/` — Customer-facing product page
+
+Shared frontend resources such as CSS, Bootstrap files, icons, fonts, and JavaScript libraries are stored under `assets/`.
+
+---
+
+## Firebase Setup
+
+Firebase configuration is intentionally not included in this repository.
+
+To use the project with Firebase, create your own Firebase project and configure Firestore and Firebase Storage.
+
+The Firebase configuration should be added to:
+
+```text
+admin/firebase.js
+```
+
+The configuration object follows the standard Firebase structure:
+
+```javascript
+const firebaseConfig = {
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: ""
+};
+```
+
+Replace the empty values with the configuration values from your own Firebase project.
+
+### Required Firebase Services
+
+The current project uses:
+
+* **Cloud Firestore** for product data
+* **Cloud Storage** for product images
+
+The application expects a Firestore collection named:
+
+```text
+products
+```
+
+Each document in the `products` collection strictly expects the following data types:
+
+| Field Name | JavaScript Type | Firestore Type | Description |
+| :--- | :--- | :--- | :--- |
+| `name` | `string` | `string` | Product name |
+| `price` | `Number` | `int64 for integers`<br>`double for decimals` | Original price |
+| `category` | `string` | `string` | Category name |
+| `description` | `string` | `string` | Detailed product info |
+| `dateType` | `string` | `string` | `"SKT"` or `"TETT"` |
+| `lastUseDate` | `string` | `string` | Format: `YYYY-MM-DD` |
+| `image` | `string` | `string` | Firebase Storage Image URL |
+| `stockCount` | `Number` | `int64` | Inventory count |
+| `priceLastUpdate` | `string` | `string` | Format: `YYYY-MM-DD` |
+
+The exact document ID is generated by Firestore and is used as the product identifier in QR code URLs.
+
+---
+
+## Running the Project
+
+The project is a client-side web application and does not require a custom backend server.
+
+For local development, serve the project using a local web server rather than opening the HTML files directly.
+
+For example, the project can be run using the Live Server extension in Visual Studio Code.
+
+After configuring Firebase, open:
+
+```text
+admin/admin.html
+```
+to access the administration panel.
+
+Customer product pages can be accessed using:
+
+```text
+product/product.html?id=PRODUCT_ID
+```
+
+---
+
+## QR Code Workflow
+
+The general workflow is:
+
+```text
+Admin creates product
+        ↓
+Product is stored in Firestore
+        ↓
+Firestore generates a document ID
+        ↓
+Product ID is added to the product URL
+        ↓
+QR code is generated from the URL
+        ↓
+Customer scans the QR code
+        ↓
+Product page reads the ID from the URL
+        ↓
+Product data is retrieved from Firestore
+        ↓
+Product information is displayed
+```
+
+This allows the QR code to point to a dynamic product record instead of containing the product information itself.
+
+Therefore, changes made to a product can be reflected on the customer page without generating a completely new QR code, as long as the product document ID remains the same.
+
+---
+
+## Design Approach
+
+The project uses separate visual structures for the administration and customer interfaces.
+
+### Admin Interface
+
+The admin panel is designed primarily for desktop use.
+
+Its main design goal is to make product management possible from a single page.
+
+The interface uses:
+
+* Product cards
+* Inline edit/delete actions
+* A single product form for both adding and editing
+* Search
+* Pagination
+* QR code generation
+
+Instead of opening separate pages for every operation, the same interface is reused for product creation and editing.
+
+### Customer Interface
+
+The customer page is designed primarily for mobile devices.
+
+The design focuses on:
+
+* Clear product information
+* Large product imagery
+* Simple navigation
+* Visible stock information
+* Clear price presentation
+* Expiry-date information
+* QR-code-oriented access
+
+---
+
+## Security and Configuration
+
+Firebase credentials are not included in this repository.
+
+The repository contains a Firebase configuration template so that users can connect the application to their own Firebase project.
+
+For production use, Firebase Authentication and properly configured Firestore and Storage Security Rules should be implemented before exposing the administration interface publicly.
+
+The current repository is intended primarily as a project, demonstration, and development template.
+
+---
+
+## Current Project Status
+
+The core functionality of the project has been implemented.
+
+### Completed
+
+* Admin product management
+* Product creation
+* Product editing
+* Product deletion
+* Product search
+* Product pagination
+* Firebase Firestore integration
+* Firebase Storage image upload
+* Dynamic product page
+* QR code generation
+* Product-specific QR URLs
+* Numerical stock management
+* Stock status visualization
+* SKT / TETT support
+* Expiry date calculation
+* Price update date
+* Expiry-based promotional logic
+* Responsive customer interface
+* Separate admin and customer page structures
+* Local frontend assets
+
+---
+
+## Project Purpose
+
+This project was developed as a practical web development project to explore:
+
+* Client-side web development
+* CRUD operations
+* Cloud databases
+* Cloud file storage
+* Dynamic web pages
+* QR code-based navigation
+* Responsive UI design
+* JavaScript module structure
+* Performance optimization
+* Basic security and deployment considerations
+
+The project focuses on building a functional system with a simple architecture rather than introducing unnecessary backend complexity.
+
+---
+
+## License
+
+This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
