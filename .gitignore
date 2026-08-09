@@ -1,0 +1,29 @@
+# VS Code
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.nsjproj
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+*.icu
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.history/
+*.log
+
+# Environment / secrets
+.env
+.env.*
+.env.local
+!.env.example
+
+
+# Firebase / local configuration
+firebase-config.local.js
