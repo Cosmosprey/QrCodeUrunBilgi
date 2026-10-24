@@ -201,7 +201,15 @@ npm install
 npm run emulators
 ```
 
-In `shared/firebase-config.js` set `projectId` to `demo-qr-product-info` and `useEmulator` to `true`, then open `http://localhost:5000/admin/admin.html`. Emulator data is kept in memory and is lost when the emulators stop.
+In `shared/firebase-config.js` set `projectId` to `demo-qr-product-info` and `useEmulator` to `true`. In a second terminal run `npm run seed`, which creates the development admin (username `admin`, password `admin123`). Then open `http://localhost:5000/admin/admin.html` and sign in. Emulator data is kept in memory and is lost when the emulators stop (run the seed command again after a restart).
+
+### Tests
+
+```bash
+npm test
+```
+
+This starts the Firestore and Storage emulators and runs the security rules tests (who may read, write and upload what, and which invalid data is rejected) together with the unit tests in `tests/`. It needs Node.js 20 or newer and Java.
 
 ### Required Firebase Services
 
@@ -209,6 +217,24 @@ The current project uses:
 
 * **Cloud Firestore** for product data
 * **Cloud Storage** for product images
+* **Authentication** (Email/Password provider) for the admin login
+
+### Setting Up the Admin Account and Security Rules
+
+Only one admin account may change data. Everyone else can only open a single product page.
+
+1. In the Firebase Console, open **Authentication**, enable the **Email/Password** sign-in method and add a user. The admin panel asks for a *username*; it turns it into an e-mail address of the form `username@qr-admin.local`. So for the username `admin`, create the user `admin@qr-admin.local` with a password of your choice. (Password-reset e-mails therefore do not work; change the password in the console if needed.)
+2. Copy that user's **User UID** from the Users table.
+3. Replace `dev-admin-uid` with the UID in **both** `firestore.rules` and `storage.rules` (the `isAdmin()` function at the top).
+4. Publish the rules: paste each file into the Rules tab of Firestore and Storage in the console, or run `npx firebase deploy --only firestore:rules,storage --project YOUR_PROJECT_ID` (requires `npm install` and `npx firebase login`).
+
+Until step 3 is done, nobody is an admin and every write is denied. This is deliberate: Firebase assigns random UIDs, so nobody can sign up as `dev-admin-uid` on a real project.
+
+What the rules enforce:
+
+* Anyone may read a single product (this is what the QR code opens), but only the admin may list, create, change or delete products.
+* A product must have exactly the fields in the table below, with sane types and sizes (name 2–70 characters, price above 0, whole-number stock, dates as `YYYY-MM-DD`, `SKT` or `TETT`, image URL starting with `http(s)://`).
+* Only the admin may upload images; only JPEG, PNG, WebP and GIF up to 2 MB are accepted (SVG is rejected on purpose, it can carry scripts).
 
 The application expects a Firestore collection named:
 
@@ -330,7 +356,9 @@ Firebase credentials are not included in this repository.
 
 The repository contains a Firebase configuration template so that users can connect the application to their own Firebase project.
 
-For production use, Firebase Authentication and properly configured Firestore and Storage Security Rules should be implemented before exposing the administration interface publicly.
+Access control is enforced by Firebase itself, not by the web pages: the admin panel requires a login, and the Firestore and Storage security rules (`firestore.rules`, `storage.rules`) only let the admin account change data. See *Setting Up the Admin Account and Security Rules* above. The pages never put product data into `innerHTML`; it is always inserted as plain text.
+
+The Firebase web configuration (API key and project id) is not a secret by itself, because it is visible to every visitor. What protects the data is the login and the rules, so make sure the rules are published before exposing the project to a network you do not control.
 
 The current repository is intended primarily as a project, demonstration, and development template.
 
@@ -343,6 +371,8 @@ The core functionality of the project has been implemented.
 ### Completed
 
 * Admin product management
+* Admin login (Firebase Authentication)
+* Firestore and Storage security rules with data validation, covered by automated tests
 * Product creation
 * Product editing
 * Product deletion
