@@ -81,6 +81,8 @@ Stock quantity is stored as a numerical value and is converted into a visual sta
 - **1–10:** Critical stock
 - **0:** Out of stock
 
+The limit of 10 can be changed in `shared/store-config.js`.
+
 The customer-facing page uses different visual indicators depending on the current stock level.
 
 ### SKT / TETT Support
@@ -92,17 +94,27 @@ Products can store either:
 
 The customer page calculates the remaining time and presents the corresponding information dynamically.
 
+Days are counted as whole calendar days in the visitor's local time, and the date itself is still valid: on the expiry day the page says "Bugün son gün" (last day), and from the next day "Tarihi Geçti" (expired). The result does not depend on the time of day or the time zone.
+
+When adding a **new** product, an SKT date in the past is rejected (an expired product must not be put on sale), while a TETT date in the past is allowed, because the TETT discount is meant for exactly those products. Editing an existing product is never blocked by its date.
+
 ### Expiry-Based Discount
 
 The customer page contains an additional demonstration feature based on the product's date information.
 
-Depending on the selected date type and remaining time, eligible products can display a discounted price and a promotional coupon.
+Depending on the selected date type and remaining time, eligible products can display a discounted price and a promotional coupon:
+
+- **SKT:** during the last 3 days, including the expiry day. Expired SKT products get no discount.
+- **TETT:** once the recommended date has passed.
+- Products without a date get no discount.
+
+The rate (20 %), the 3-day window, the coupon code (`KAZAN20`) and the on/off switch live in `shared/store-config.js`. Prices are rounded to whole kuruş.
 
 This feature was implemented as a project-specific concept rather than as a complete real-world payment or coupon infrastructure.
 
 ### Price Update Information
 
-The system stores the date on which the product price was last updated and displays this information on the customer-facing page.
+The system stores the date on which the product price last **changed** and displays this information on the customer-facing page. Saving other fields (for example the stock) does not change it.
 
 ### QR Code Generation
 
