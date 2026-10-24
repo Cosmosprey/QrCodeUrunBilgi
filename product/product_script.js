@@ -1,4 +1,5 @@
 import { db, doc, getDoc } from "../shared/firebase.js";
+import { el, safeHttpUrl } from "../shared/dom.js";
 
 const params = new URLSearchParams(window.location.search);
 const productId = params.get("id");
@@ -31,7 +32,13 @@ async function loadProduct() {
         document.getElementById("name").innerText = p.name;
         document.getElementById("price").innerText = p.price + " ₺";
         document.getElementById("description").innerText = p.description || "Açıklama belirtilmedi.";
-        document.getElementById("image").src = p.image;
+        const imageEl = document.getElementById("image");
+        const imageUrl = safeHttpUrl(p.image);
+        if (imageUrl) {
+            imageEl.src = imageUrl;
+        } else {
+            imageEl.removeAttribute("src");
+        }
         if (document.getElementById("category")) document.getElementById("category").innerText = p.category;
 
         // Stok Durumu Gösterimi
@@ -91,70 +98,90 @@ async function loadProduct() {
         const couponReasonText = dateType === "TETT" ? "tavsiye edilen tüketim tarihi" : "SKT'si";
 
         // Türüne göre şık bir rozet (badge) oluşturuyoruz
-        const typeBadge = dateType === "TETT"
-            ? `<span class="badge bg-info text-dark ms-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">TETT</span>`
-            : `<span class="badge bg-danger ms-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">SKT</span>`;
+        const typeBadge = el("span", {
+            className: dateType === "TETT" ? "badge bg-info text-dark ms-2" : "badge bg-danger ms-2",
+            text: dateType === "TETT" ? "TETT" : "SKT",
+            attrs: { style: "font-size: 0.7rem; letter-spacing: 0.5px;" }
+        });
 
         const warrantyEl = document.getElementById("lastUseDate");
         if (warrantyEl) {
             let statusText = daysDiff > 0 ? `${daysDiff} Gün Kaldı` : "Tarihi Geçti";
 
             // Kutunun içini daha düzenli ve rozetli hale getiriyoruz
-            warrantyEl.innerHTML = `
-                <div class="d-flex justify-content-between align-items-start w-100">
-                    <div>
-                        <div class="text-muted small text-uppercase fw-bold" style="font-size: 0.7rem;">
-                            ${dateLabel} ${typeBadge}
-                        </div>
-                        <div class="fw-black text-dark mt-1" style="font-size: 1.1rem;">
-                            ${formatDate(p.lastUseDate)}
-                        </div>
-                        <div class="small mt-1 ${daysDiff <= 3 ? 'text-danger fw-bold' : 'text-secondary'}">
-                            <i class="bi ${daysDiff <= 3 ? 'bi-exclamation-circle' : 'bi-clock-history'}"></i> ${statusText}
-                        </div>
-                    </div>
-                </div>
-            `;
+            warrantyEl.replaceChildren(
+                el("div", { className: "d-flex justify-content-between align-items-start w-100" }, [
+                    el("div", {}, [
+                        el("div", {
+                            className: "text-muted small text-uppercase fw-bold",
+                            attrs: { style: "font-size: 0.7rem;" }
+                        }, [`${dateLabel} `, typeBadge]),
+                        el("div", {
+                            className: "fw-black text-dark mt-1",
+                            text: formatDate(p.lastUseDate),
+                            attrs: { style: "font-size: 1.1rem;" }
+                        }),
+                        el("div", { className: `small mt-1 ${daysDiff <= 3 ? 'text-danger fw-bold' : 'text-secondary'}` }, [
+                            el("i", { className: `bi ${daysDiff <= 3 ? 'bi-exclamation-circle' : 'bi-clock-history'}` }),
+                            ` ${statusText}`
+                        ])
+                    ])
+                ])
+            );
         }
 
         // --- Fiyat, Son Güncelleme ve Kupon Mantığı ---
         const priceEl = document.getElementById("price");
         if (priceEl) {
-            const updateNote = `<div class="text-muted mt-1" style="font-size: 0.8rem; font-weight: normal;">
-                <i class="bi bi-clock-history"></i> Son Fiyat Güncelleme: ${formatDate(p.priceLastUpdate)}
-            </div>`;
+            const price = Number(p.price);
+            const priceText = Number.isFinite(price) ? `${price} ₺` : "—";
 
-            // İndirim Şartı: SKT ise son 3 gün, TETT ise tarihi geçmiş olsa bile indirim. 
-            const isDiscountEligible = (dateType === "TETT" && daysDiff < 0) || (dateType === "SKT" && daysDiff <= 3 && daysDiff >= 0);
+            const updateNote = el("div", {
+                className: "text-muted mt-1",
+                attrs: { style: "font-size: 0.8rem; font-weight: normal;" }
+            }, [
+                el("i", { className: "bi bi-clock-history" }),
+                ` Son Fiyat Güncelleme: ${formatDate(p.priceLastUpdate)}`
+            ]);
+
+            // İndirim Şartı: SKT ise son 3 gün, TETT ise tarihi geçmiş olsa bile indirim.
+            const isDiscountEligible = Number.isFinite(price) &&
+                ((dateType === "TETT" && daysDiff < 0) || (dateType === "SKT" && daysDiff <= 3 && daysDiff >= 0));
 
             if (isDiscountEligible) {
-                const discountedPrice = (p.price * 0.8).toFixed(2);
+                const discountedPrice = (price * 0.8).toFixed(2);
 
                 // İndirimli fiyatı göster
-                priceEl.innerHTML = `
-                    <span class="text-muted text-decoration-line-through fs-5 me-2">${p.price} ₺</span>
-                    <span class="text-success fw-black">${discountedPrice} ₺</span>
-                    ${updateNote}`;
+                priceEl.replaceChildren(
+                    el("span", { className: "text-muted text-decoration-line-through fs-5 me-2", text: priceText }),
+                    el("span", { className: "text-success fw-black", text: `${discountedPrice} ₺` }),
+                    updateNote
+                );
 
                 // Kuponu Oluştur
-                const couponDiv = document.createElement("div");
-                couponDiv.className = "alert alert-success mt-3 shadow-sm animate-bounce";
-                couponDiv.innerHTML = `
-                    <div class="d-flex align-items-center gap-3">
-                        <i class="bi bi-ticket-perforated-fill fs-2"></i>
-                        <div>
-                            <strong class="text-dark">Sürdürülebilirlik Fırsatı!</strong><br>
-                            <small class="text-dark">Ürünün ${couponReasonText} yaklaştığı için kasada 
-                            <span class="badge bg-success" style="font-size: 1rem;">KAZAN20</span> koduyla <strong>%20 indirim</strong> kazanın!</small>
-                        </div>
-                    </div>`;
+                const couponDiv = el("div", { className: "alert alert-success mt-3 shadow-sm animate-bounce" }, [
+                    el("div", { className: "d-flex align-items-center gap-3" }, [
+                        el("i", { className: "bi bi-ticket-perforated-fill fs-2" }),
+                        el("div", {}, [
+                            el("strong", { className: "text-dark", text: "Sürdürülebilirlik Fırsatı!" }),
+                            el("br"),
+                            el("small", { className: "text-dark" }, [
+                                `Ürünün ${couponReasonText} yaklaştığı için kasada `,
+                                el("span", { className: "badge bg-success", text: "KAZAN20", attrs: { style: "font-size: 1rem;" } }),
+                                " koduyla ",
+                                el("strong", { text: "%20 indirim" }),
+                                " kazanın!"
+                            ])
+                        ])
+                    ])
+                ]);
 
                 const priceSegment = document.querySelector(".price-segment");
                 if (priceSegment) priceSegment.after(couponDiv);
 
             } else {
                 // İndirim yoksa sadece normal fiyat
-                priceEl.innerHTML = `${p.price} ₺ ${updateNote}`;
+                priceEl.replaceChildren(`${priceText} `, updateNote);
             }
         }
 

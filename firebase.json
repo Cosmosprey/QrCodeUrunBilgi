@@ -1,4 +1,10 @@
 {
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "hosting": {
     "public": ".",
     "ignore": [
@@ -8,6 +14,7 @@
       "package*.json",
       "CLAUDE.md",
       "tests/**",
+      "scripts/**",
       "*.rules"
     ]
   },

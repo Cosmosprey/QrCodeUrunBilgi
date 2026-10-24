@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Keep this value identical in firestore.rules (see the comment there).
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == 'dev-admin-uid';
+    }
+
+    match /products/{fileName} {
+      // Product images are shown on the public product page. They can be fetched by their exact
+      // URL, but the folder cannot be listed (that would reveal every image in the catalogue).
+      allow get: if true;
+
+      // Only the admin may upload: images only (no SVG), at most 2 MB.
+      // Keep the limits in sync with admin/upload.js.
+      allow create, update: if isAdmin()
+                            && request.resource.size <= 2 * 1024 * 1024
+                            && request.resource.contentType.matches('image/(jpeg|png|webp|gif)');
+
+      allow delete: if isAdmin();
+    }
+
+    // Everything else is denied by default.
+  }
+}

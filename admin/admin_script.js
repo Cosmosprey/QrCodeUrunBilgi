@@ -1,6 +1,12 @@
 import { db, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "../shared/firebase.js";
+import {
+    auth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+    storage, ref, uploadBytes, getDownloadURL
+} from "./firebase-admin.js";
 import { generateQR } from "./easyqrcodejs.js";
-import { storage, ref, uploadBytes, getDownloadURL } from "../shared/firebase.js";
+import { el, safeHttpUrl } from "../shared/dom.js";
+import { usernameToEmail } from "./username.js";
+import { validateImageFile, storagePathFor } from "./upload.js";
 // --- GLOBAL STATE ---
 let products = [];
 let editingId = null;
@@ -13,108 +19,228 @@ const today = new Date().toISOString().split('T')[0];// Bugünün tarihini YYYY-
 document.getElementById("lastUseDate").setAttribute("min", today);// Son kullanma tarihi bugünden küçük olamaz
 
 
+// --- AUTH (LOGIN / LOGOUT) ---
+const loginView = document.getElementById("login-view");
+const appView = document.getElementById("app-view");
+const loginForm = document.getElementById("login-form");
+const loginError = document.getElementById("login-error");
+const loginButton = document.getElementById("login-btn");
+
+function showMessage(element, message) {
+    element.textContent = message;
+    element.classList.toggle("d-none", !message);
+}
+
+function loginErrorMessage(err) {
+    switch (err?.code) {
+        case "auth/invalid-credential":
+        case "auth/invalid-login-credentials":
+        case "auth/user-not-found":
+        case "auth/wrong-password":
+        case "auth/invalid-email":
+            return "Kullanıcı adı veya parola hatalı.";
+        case "auth/too-many-requests":
+            return "Çok fazla hatalı deneme. Bir süre sonra tekrar deneyin.";
+        case "auth/network-request-failed":
+            return "Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.";
+        default:
+            return "Giriş yapılamadı. Lütfen tekrar deneyin.";
+    }
+}
+
+loginForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    showMessage(loginError, "");
+
+    const email = usernameToEmail(document.getElementById("login-username").value);
+    const password = document.getElementById("login-password").value;
+    if (!email || !password) {
+        showMessage(loginError, "Kullanıcı adı veya parola hatalı.");
+        return;
+    }
+
+    loginButton.disabled = true;
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+        showMessage(loginError, loginErrorMessage(err));
+    } finally {
+        loginButton.disabled = false;
+    }
+});
+
+document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
+
+// The panel is only shown (and data only requested) while someone is signed in.
+// What the signed-in user may actually do is decided by the Firestore/Storage rules, not here.
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        loginView.classList.add("d-none");
+        appView.classList.remove("d-none");
+        fetchProducts();
+    } else {
+        appView.classList.add("d-none");
+        loginView.classList.remove("d-none");
+        products = [];
+        resetForm();
+        document.getElementById("login-password").value = "";
+        document.getElementById("product-grid").replaceChildren();
+    }
+});
+
+
 // --- IMAGE UPLOAD ---
 async function uploadImage(file) {
-    const fileRef = ref(storage, "products/" + Date.now() + "_" + file.name);
+    const fileRef = ref(storage, storagePathFor(file, crypto.randomUUID()));
 
-    await uploadBytes(fileRef, file);
+    await uploadBytes(fileRef, file, { contentType: file.type });
 
     const url = await getDownloadURL(fileRef);
 
     return url;
 }
 
-// --- FORM SUBMIT (ADD / UPDATE) 
+// --- FORM SUBMIT (ADD / UPDATE)
 document.getElementById("product-form").addEventListener("submit", async function (e) {
     e.preventDefault();
+    const formError = document.getElementById("form-error");
+    showMessage(formError, "");
+
     const file = document.getElementById("imageFile").files[0];
-
-    let imageUrl = currentImageUrl;
-
-    if (file) {
-        imageUrl = await uploadImage(file);
+    const fileProblem = validateImageFile(file);
+    if (fileProblem) {
+        showMessage(formError, fileProblem);
+        return;
     }
 
-    const productData = {
-        name: document.getElementById("name").value,
-        price: Number(document.getElementById("price").value),
-        category: document.getElementById("category").value,
-        description: document.getElementById("description").value,
-        dateType: document.querySelector('input[name="dateType"]:checked').value,
-        lastUseDate: document.getElementById("lastUseDate").value,
-        image: imageUrl,
-        stockCount: Number(document.getElementById("stockCount").value),
-        priceLastUpdate: new Date().toISOString().split('T')[0] // Fiyatın değiştiği son tarihi kaydeder
-    };
+    const submitButton = document.getElementById("submit-btn");
+    submitButton.disabled = true;
+
+    try {
+        let imageUrl = currentImageUrl;
+
+        if (file) {
+            imageUrl = await uploadImage(file);
+        }
+
+        const productData = {
+            name: document.getElementById("name").value,
+            price: Number(document.getElementById("price").value),
+            category: document.getElementById("category").value,
+            description: document.getElementById("description").value,
+            dateType: document.querySelector('input[name="dateType"]:checked').value,
+            lastUseDate: document.getElementById("lastUseDate").value,
+            image: imageUrl,
+            stockCount: Number(document.getElementById("stockCount").value),
+            priceLastUpdate: new Date().toISOString().split('T')[0] // Fiyatın değiştiği son tarihi kaydeder
+        };
 
 
-    if (editingId) {
-        const refDoc = doc(db, "products", editingId);
-        await updateDoc(refDoc, productData);
-    } else {
-        await addDoc(collection(db, "products"), productData);
+        if (editingId) {
+            const refDoc = doc(db, "products", editingId);
+            await updateDoc(refDoc, productData);
+        } else {
+            await addDoc(collection(db, "products"), productData);
+        }
+
+        resetForm();
+        await fetchProducts();
+    } catch (err) {
+        console.error("Kaydetme hatası:", err);
+        showMessage(formError, saveErrorMessage(err));
+    } finally {
+        submitButton.disabled = false;
     }
-
-    resetForm();
-    await fetchProducts();
 });
+
+function saveErrorMessage(err) {
+    if (err?.code === "permission-denied" || err?.code === "storage/unauthorized") {
+        return "Bu işlem için yetkiniz yok veya girilen bilgiler geçersiz.";
+    }
+    return "Ürün kaydedilemedi. Lütfen tekrar deneyin.";
+}
 
 // --- RENDER LOGIC ---
 async function fetchProducts() {
-    const snapshot = await getDocs(collection(db, "products"));
+    const listError = document.getElementById("list-error");
+    showMessage(listError, "");
 
-    products = snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data()
-    }));
+    try {
+        const snapshot = await getDocs(collection(db, "products"));
+
+        products = snapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data()
+        }));
+    } catch (err) {
+        console.error("Ürünler alınamadı:", err);
+        if (err?.code === "permission-denied") {
+            // Signed in, but not the admin account named in the security rules.
+            await signOut(auth);
+            showMessage(document.getElementById("login-error"), "Bu hesabın yönetici yetkisi yok.");
+        } else {
+            showMessage(listError, "Ürünler yüklenemedi. Lütfen sayfayı yenileyin.");
+        }
+        return;
+    }
 
     renderProducts();
 }
+
+function stockBadge(count) {
+    if (count > 10) {
+        return { className: "bg-success", text: `Stok: ${count}` }; // Yeşil - Sorun yok
+    }
+    if (count > 0) {
+        return { className: "bg-warning text-dark", text: `Kritik Stok: ${count}` }; // Turuncu - Takip et!
+    }
+    return { className: "bg-danger", text: "Tükendi" }; // Kırmızı - Hemen sipariş ver!
+}
+
+function buildProductCard(p) {
+    const badge = stockBadge(Number(p.stockCount) || 0);
+    const imageUrl = safeHttpUrl(p.image);
+
+    return el("div", { className: "product-card d-flex flex-column position-relative shadow" }, [
+        el("span", { className: `badge position-absolute top-0 end-0 m-3 ${badge.className}`, text: badge.text }),
+        el("img", { className: "product-img", attrs: { src: imageUrl, loading: "lazy", alt: "" } }),
+        el("div", { className: "p-3 d-flex flex-column flex-grow-1" }, [
+            el("div", { className: "d-flex justify-content-between align-items-center mb-1" }, [
+                el("h6", { className: "mb-0 fw-bold text-white text-truncate", text: String(p.name ?? ""), attrs: { style: "max-width:120px" } }),
+                el("span", { className: "text-primary fw-bold", text: `${p.price}₺` })
+            ]),
+            el("p", { className: "product-desc", text: p.description || "Açıklama yok." }),
+            el("div", { className: "mt-auto d-flex gap-2" }, [
+                el("button", {
+                    className: "btn btn-sm btn-outline-light flex-grow-1",
+                    attrs: { title: "Düzenle", type: "button" },
+                    on: { click: () => handleEdit(p.id) }
+                }, [el("i", { className: "bi bi-pencil" })]),
+                el("button", {
+                    className: "btn btn-sm btn-outline-danger flex-grow-1",
+                    attrs: { title: "Sil", type: "button" },
+                    on: { click: () => handleDelete(p.id) }
+                }, [el("i", { className: "bi bi-trash" })]),
+                el("button", {
+                    className: "btn btn-sm btn-primary flex-grow-1",
+                    attrs: { title: "QR Göster", type: "button" },
+                    on: { click: () => handleQR(p.id) }
+                }, [el("i", { className: "bi bi-qr-code" })])
+            ])
+        ])
+    ]);
+}
+
 function renderProducts() {
     const grid = document.getElementById('product-grid');
-    grid.innerHTML = '';
 
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    const filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm));
+    const searchTerm = document.getElementById('search-input').value.toLocaleLowerCase('tr');
+    const filtered = products.filter(p => String(p.name ?? "").toLocaleLowerCase('tr').includes(searchTerm));
 
     const start = currentPage * itemsPerPage;
     const pageItems = filtered.slice(start, start + itemsPerPage);
 
-    pageItems.forEach(p => {
-        // renderProducts içindeki döngünün içinde:
-        const count = Number(p.stockCount) || 0;
-        let badgeClass = "";
-        let badgeText = "";
-
-        if (count > 10) {
-            badgeClass = "bg-success"; // Yeşil - Sorun yok
-            badgeText = `Stok: ${count}`;
-        } else if (count > 0) {
-            badgeClass = "bg-warning text-dark"; // Turuncu - Takip et!
-            badgeText = `Kritik Stok: ${count}`;
-        } else {
-            badgeClass = "bg-danger"; // Kırmızı - Hemen sipariş ver!
-            badgeText = "Tükendi";
-        }
-
-        grid.innerHTML += `
-                <div class="product-card d-flex flex-column position-relative shadow">
-                    <span class="badge position-absolute top-0 end-0 m-3 ${badgeClass}">${badgeText}</span>
-                    <img src="${p.image}" loading="lazy" class="product-img">
-                    <div class="p-3 d-flex flex-column flex-grow-1">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <h6 class="mb-0 fw-bold text-white text-truncate" style="max-width:120px">${p.name}</h6>
-                            <span class="text-primary fw-bold">${p.price}₺</span>
-                        </div>
-                        <p class="product-desc">${p.description || 'Açıklama yok.'}</p>
-                        <div class="mt-auto d-flex gap-2">
-                            <button class="btn btn-sm btn-outline-light flex-grow-1" title="Düzenle" onclick="handleEdit('${p.id}')"><i class="bi bi-pencil"></i></button>
-                            <button class="btn btn-sm btn-outline-danger flex-grow-1" title="Sil" onclick="handleDelete('${p.id}')"><i class="bi bi-trash"></i></button>
-                            <button class="btn btn-sm btn-primary flex-grow-1"  title="QR Göster" onclick="handleQR('${p.id}')"> <i class="bi bi-qr-code"></i> </button>
-                        </div>
-                    </div>
-                </div>`;
-    });
+    grid.replaceChildren(...pageItems.map(buildProductCard));
 
     document.getElementById('prevBtn').disabled = currentPage === 0;
     document.getElementById('nextBtn').disabled = start + itemsPerPage >= filtered.length;
@@ -151,8 +277,13 @@ function handleEdit(id) {
 // --- DELETE ---
 async function handleDelete(id) {
     if (confirm("Silmek istiyor musun?")) {
-        await deleteDoc(doc(db, "products", id));
-        fetchProducts();
+        try {
+            await deleteDoc(doc(db, "products", id));
+            await fetchProducts();
+        } catch (err) {
+            console.error("Silme hatası:", err);
+            showMessage(document.getElementById("list-error"), "Ürün silinemedi. Lütfen tekrar deneyin.");
+        }
     }
 }
 
@@ -164,6 +295,7 @@ function resetForm() {
     document.getElementById("submit-btn").innerText = "KAYDET";
     document.getElementById("submit-btn").className = "btn btn-primary w-100 py-3 fw-bold";
     currentImageUrl = "";
+    showMessage(document.getElementById("form-error"), "");
 }
 
 // --- UTILS ---
@@ -173,9 +305,6 @@ function filterAndReset() {
 }
 function nextPage() { currentPage++; renderProducts(); }
 function prevPage() { currentPage--; renderProducts(); }
-
-// İlk yükleme
-fetchProducts();
 
 
 
@@ -202,12 +331,9 @@ function closeQR() {
 
 
 
-// HTML'den erişilebilmesi için fonksiyonları window objesine bağlıyoruz
-window.handleEdit = handleEdit;
-window.handleDelete = handleDelete;
+// admin.html içindeki satır içi (onclick/onkeyup) çağrıların erişebilmesi için window'a bağlıyoruz
 window.resetForm = resetForm;
 window.nextPage = nextPage;
 window.prevPage = prevPage;
 window.filterAndReset = filterAndReset;
-window.handleQR = handleQR;
 window.closeQR = closeQR;
