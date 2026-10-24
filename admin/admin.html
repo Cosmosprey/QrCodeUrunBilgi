@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://www.gstatic.com; object-src 'none'; base-uri 'none'">
     <title>Admin Paneli | QR Kodlu Ürün Bilgi Sistemi</title>
     <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
 </head>
 
 <body class="admin-theme">
@@ -80,10 +81,8 @@
                         </div>
                         <!-- Son Kullanma Tarihi Alan -->
                         <div class="mb-3">
-                            <div class="input-group">
-                                <input type="text" id="lastUseDate" class="form-control" placeholder="SKT/TETT Tarihi"
-                                    onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'">
-                            </div>
+                            <label for="lastUseDate" class="form-label small text-white-50 mb-1">SKT / TETT tarihi</label>
+                            <input type="date" id="lastUseDate" class="form-control">
                         </div>
                         <!-- Stok Adedi Alanı -->
                         <div class="mb-3">
@@ -109,14 +108,14 @@
             <div class="col-lg-7 col-xl-8 content-area">
                 <div class="d-flex justify-content-between align-items-center mb-5">
                     <input type="text" id="search-input" class="form-control w-50 rounded-pill ps-4"
-                        placeholder="Ürün ara..." onkeyup="filterAndReset()">
+                        placeholder="Ürün ara...">
                 </div>
                 <div id="list-error" class="alert alert-danger py-2 d-none" role="alert"></div>
                 <div class="d-flex align-items-center gap-4 flex-grow-1">
-                    <button class="nav-btn" onclick="prevPage()" id="prevBtn"><i
+                    <button class="nav-btn" id="prevBtn"><i
                             class="bi bi-chevron-left"></i></button>
                     <div id="product-grid" class="product-grid-container"></div>
-                    <button class="nav-btn" onclick="nextPage()" id="nextBtn"><i
+                    <button class="nav-btn" id="nextBtn"><i
                             class="bi bi-chevron-right"></i></button>
                 </div>
             </div>
@@ -125,17 +124,16 @@
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="../admin/admin_script.js"></script>
 
-    <div id="qrModal"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center;">
+    <div id="qrModal" class="qr-modal d-none">
 
-        <div style="background:#1e293b; padding:20px; border-radius:15px; text-align:center;">
+        <div class="qr-modal-box">
             <h5>QR Kod</h5>
 
             <div id="qrContainer"></div>
 
-            <p id="qrLink" style="font-size:12px; margin-top:10px;"></p>
+            <p id="qrLink" class="qr-link"></p>
 
-            <button onclick="closeQR()" class="btn btn-secondary mt-2">Kapat</button>
+            <button id="qrCloseBtn" type="button" class="btn btn-secondary mt-2">Kapat</button>
         </div>
 
     </div>

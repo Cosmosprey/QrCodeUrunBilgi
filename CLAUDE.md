@@ -33,15 +33,19 @@ Hobby / portfolio project, meant to be downloaded and run on a local network by 
 ## Layout
 
 ```
-admin/      admin panel (admin.html, admin_script.js, Auth/Storage setup, upload and username helpers, QR wrapper)
+admin/      admin panel: admin_script.js only wires modules (auth-ui, product-list, product-form, qr-modal);
+            firebase-admin.js (Auth/Storage), product-images, upload/username helpers, list-logic (pure), qr.js (wrapper)
 product/    customer-facing product page
 shared/     code used by both pages (Firebase app + Firestore init, config, safe DOM helpers,
             product-logic.js = pure date/stock/discount/price logic, store-config.js = discount and stock settings)
-assets/     vendored CSS/JS (Bootstrap, Bootstrap Icons)
+assets/     vendored CSS/JS (Bootstrap, Bootstrap Icons, js/vendor/easyqrcodejs.js) and the page stylesheets
+            css/admin.css and css/product.css (each page loads only its own)
 tests/      node:test suites (security rules via the emulators, pure helpers)
 scripts/    development helpers (emulator seed)
 firestore.rules, storage.rules   security rules (the admin is identified by a UID constant)
 ```
+
+No inline scripts or inline event handlers (`onclick=` etc.): both HTML files carry a Content Security Policy `<meta>` tag (`script-src 'self' https://www.gstatic.com`). Attach events with `addEventListener`. If you add another script host, update the tag in **both** pages. Third-party libraries are vendored under `assets/js/vendor/` (see its README), not loaded from CDNs; the Firebase SDK is the one exception.
 
 The customer page must not import Auth or Storage: it only loads `shared/firebase.js` (app + Firestore). Admin-only Firebase services live in `admin/firebase-admin.js`.
 
@@ -74,10 +78,10 @@ Work proceeds phase by phase, one commit series per phase. Before each phase, de
 - [x] **Phase 0 - Foundation:** `shared/` folder, config example, emulator setup, this file.
 - [x] **Phase 1 - Security:** username/password login (Firebase Auth, single admin), Firestore and Storage rules with validation, XSS fixes, upload limits.
 - [x] **Phase 2 - Correctness:** pure date/stock/discount functions with `node:test` tests, error handling, fix `priceLastUpdate` (only change when the price changes), discount settings in one config.
-- [ ] **Phase 3 - Structure:** remove inline `onclick` handlers and `window.*` assignments, separate the customer page from admin code.
+- [x] **Phase 3 - Structure:** remove inline `onclick` handlers and `window.*` assignments, separate the customer page from admin code.
 - [ ] **Phase 4 - UI:** responsive admin, QR download/print and a "site address" field (so QR codes work on a LAN), toasts and loading states, accessibility, image downscaling, TR/EN.
 - [ ] **Phase 5 - Quality:** ESLint/Prettier, rules tests against the emulator, README and screenshots.
 
 ## Known issues being worked on
 
-See the roadmap above. The most important ones now: the QR code base URL is hard-coded in `admin/admin_script.js`, the admin layout is desktop only, a product without an image shows a broken image on the customer page, and very long unbroken product names overflow.
+See the roadmap above. The most important ones now: the QR code base URL is hard-coded in `admin/qr-modal.js`, the admin layout is desktop only, a product without an image shows a broken image on the customer page, and very long unbroken product names overflow.
