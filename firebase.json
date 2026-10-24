@@ -1,0 +1,22 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "package*.json",
+      "CLAUDE.md",
+      "tests/**",
+      "*.rules"
+    ]
+  },
+  "emulators": {
+    "hosting": { "host": "0.0.0.0", "port": 5000 },
+    "firestore": { "host": "0.0.0.0", "port": 8080 },
+    "storage": { "host": "0.0.0.0", "port": 9199 },
+    "auth": { "host": "0.0.0.0", "port": 9099 },
+    "ui": { "enabled": true, "port": 4000 },
+    "singleProjectMode": true
+  }
+}

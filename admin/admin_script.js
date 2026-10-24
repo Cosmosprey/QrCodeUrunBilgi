@@ -1,6 +1,6 @@
-import { db, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "./firebase.js";
+import { db, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "../shared/firebase.js";
 import { generateQR } from "./easyqrcodejs.js";
-import { storage, ref, uploadBytes, getDownloadURL } from "./firebase.js";
+import { storage, ref, uploadBytes, getDownloadURL } from "../shared/firebase.js";
 // --- GLOBAL STATE ---
 let products = [];
 let editingId = null;

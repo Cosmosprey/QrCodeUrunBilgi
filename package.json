@@ -1,0 +1,17 @@
+{
+  "name": "qr-product-info",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "QR code based product information system (vanilla JS + Firebase).",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "emulators": "firebase emulators:start --project demo-qr-product-info"
+  },
+  "devDependencies": {
+    "firebase-tools": "^15.34.1"
+  }
+}

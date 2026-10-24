@@ -159,6 +159,8 @@ The project is separated into two main user-facing areas:
 * `admin/` — Product management interface
 * `product/` — Customer-facing product page
 
+* `shared/` — Code used by both areas (Firebase initialisation and configuration)
+
 Shared frontend resources such as CSS, Bootstrap files, icons, fonts, and JavaScript libraries are stored under `assets/`.
 
 ---
@@ -169,16 +171,16 @@ Firebase configuration is intentionally not included in this repository.
 
 To use the project with Firebase, create your own Firebase project and configure Firestore and Firebase Storage.
 
-The Firebase configuration should be added to:
+Copy the example configuration file and fill it in:
 
-```text
-admin/firebase.js
+```bash
+cp shared/firebase-config.example.js shared/firebase-config.js
 ```
 
-The configuration object follows the standard Firebase structure:
+`shared/firebase-config.js` is git-ignored, so your project settings are never committed. It exports the standard Firebase configuration object:
 
 ```javascript
-const firebaseConfig = {
+export const firebaseConfig = {
     apiKey: "",
     authDomain: "",
     projectId: "",
@@ -189,6 +191,17 @@ const firebaseConfig = {
 ```
 
 Replace the empty values with the configuration values from your own Firebase project.
+
+### Developing without a Firebase project
+
+The Firebase Emulator Suite can stand in for a real project (requires Node.js and Java):
+
+```bash
+npm install
+npm run emulators
+```
+
+In `shared/firebase-config.js` set `projectId` to `demo-qr-product-info` and `useEmulator` to `true`, then open `http://localhost:5000/admin/admin.html`. Emulator data is kept in memory and is lost when the emulators stop.
 
 ### Required Firebase Services
 
@@ -368,6 +381,12 @@ This project was developed as a practical web development project to explore:
 * Basic security and deployment considerations
 
 The project focuses on building a functional system with a simple architecture rather than introducing unnecessary backend complexity.
+
+---
+
+## AI Assistance
+
+The first version of this project was written with help from a chat-based AI assistant. Later improvements (security, structure, tests and UI) are developed with Claude Code. Design decisions and code review remain with the project owner.
 
 ---
 
