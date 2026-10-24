@@ -15,7 +15,8 @@ import {
   connectStorageEmulator,
   ref,
   uploadBytes,
-  getDownloadURL
+  getDownloadURL,
+  deleteObject
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
 
 const auth = getAuth(app);
@@ -35,5 +36,6 @@ export {
   storage,
   ref,
   uploadBytes,
-  getDownloadURL
+  getDownloadURL,
+  deleteObject
 };

@@ -35,7 +35,8 @@ Hobby / portfolio project, meant to be downloaded and run on a local network by 
 ```
 admin/      admin panel (admin.html, admin_script.js, Auth/Storage setup, upload and username helpers, QR wrapper)
 product/    customer-facing product page
-shared/     code used by both pages (Firebase app + Firestore init, config, safe DOM helpers)
+shared/     code used by both pages (Firebase app + Firestore init, config, safe DOM helpers,
+            product-logic.js = pure date/stock/discount/price logic, store-config.js = discount and stock settings)
 assets/     vendored CSS/JS (Bootstrap, Bootstrap Icons)
 tests/      node:test suites (security rules via the emulators, pure helpers)
 scripts/    development helpers (emulator seed)
@@ -55,7 +56,7 @@ npm install            # dev tooling only (firebase-tools, rules testing)
 npm run emulators      # Firestore, Storage, Auth and a static server on http://localhost:5000
 npm run seed           # (emulators running) creates the dev admin: username admin / password admin123
 npm test               # starts the Firestore + Storage emulators and runs tests/*.test.js
-npm run test:unit      # only the pure unit tests, no emulator needed
+npm run test:unit      # only the pure unit tests (helpers, product logic in 4 time zones), no emulator needed
 ```
 
 To develop without a real Firebase project, copy the example config, set `projectId` to `demo-qr-product-info` and `useEmulator = true`. Then open `http://localhost:5000/admin/admin.html`. Emulator data is in-memory and lost on restart (run `npm run seed` again).
@@ -72,11 +73,11 @@ Work proceeds phase by phase, one commit series per phase. Before each phase, de
 
 - [x] **Phase 0 - Foundation:** `shared/` folder, config example, emulator setup, this file.
 - [x] **Phase 1 - Security:** username/password login (Firebase Auth, single admin), Firestore and Storage rules with validation, XSS fixes, upload limits.
-- [ ] **Phase 2 - Correctness:** pure date/stock/discount functions with `node:test` tests, error handling, fix `priceLastUpdate` (only change when the price changes), discount settings in one config.
+- [x] **Phase 2 - Correctness:** pure date/stock/discount functions with `node:test` tests, error handling, fix `priceLastUpdate` (only change when the price changes), discount settings in one config.
 - [ ] **Phase 3 - Structure:** remove inline `onclick` handlers and `window.*` assignments, separate the customer page from admin code.
 - [ ] **Phase 4 - UI:** responsive admin, QR download/print and a "site address" field (so QR codes work on a LAN), toasts and loading states, accessibility, image downscaling, TR/EN.
 - [ ] **Phase 5 - Quality:** ESLint/Prettier, rules tests against the emulator, README and screenshots.
 
 ## Known issues being worked on
 
-See the roadmap above. The most important ones now: expiry date maths mixes UTC and local time, `priceLastUpdate` changes on every save, and the QR code base URL is hard-coded in `admin/admin_script.js`.
+See the roadmap above. The most important ones now: the QR code base URL is hard-coded in `admin/admin_script.js`, the admin layout is desktop only, a product without an image shows a broken image on the customer page, and very long unbroken product names overflow.
