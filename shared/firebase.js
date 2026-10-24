@@ -2,7 +2,7 @@
 // Both the admin panel and the customer page import from here.
 // Authentication and Storage are only needed by the admin panel: see admin/firebase-admin.js.
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 
 import {
   getFirestore,
@@ -14,7 +14,7 @@ import {
   doc,
   updateDoc,
   getDoc
-} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 // The config file is git-ignored and created by the person who sets the project up.
 // It is loaded dynamically so a missing file produces a clear message instead of a blank page.

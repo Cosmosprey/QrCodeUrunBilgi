@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 
 import {
   getStorage,
@@ -17,7 +17,7 @@ import {
   uploadBytes,
   getDownloadURL,
   deleteObject
-} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js";
 
 const auth = getAuth(app);
 const storage = getStorage(app);

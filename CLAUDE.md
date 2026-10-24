@@ -47,6 +47,8 @@ firestore.rules, storage.rules   security rules (the admin is identified by a UI
 
 No inline scripts or inline event handlers (`onclick=` etc.): both HTML files carry a Content Security Policy `<meta>` tag (`script-src 'self' https://www.gstatic.com`). Attach events with `addEventListener`. If you add another script host, update the tag in **both** pages. Third-party libraries are vendored under `assets/js/vendor/` (see its README), not loaded from CDNs; the Firebase SDK is the one exception.
 
+The Firebase SDK is loaded from Google's CDN at a fixed version (the `gstatic.com/firebasejs/<version>/` URLs in `shared/firebase.js` and `admin/firebase-admin.js`). That version must equal the `firebase` dev dependency in `package.json`; `tests/sdk-version.test.js` fails when they drift apart, so update them together. Firebase 13 (and `@firebase/rules-unit-testing` 6) need Node 24.12 or newer, so the project stays on the 12.x line for now.
+
 The customer page must not import Auth or Storage: it only loads `shared/firebase.js` (app + Firestore). Admin-only Firebase services live in `admin/firebase-admin.js`.
 
 Existing HTML/JS files use CRLF line endings; keep them that way so diffs stay small. New files use LF.
