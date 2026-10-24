@@ -1,6 +1,6 @@
-// easyqrcodejs.js
+// Thin wrapper around the vendored easyqrcodejs library (see assets/js/vendor/README.md).
 
-import QRCode from "https://cdn.jsdelivr.net/npm/easyqrcodejs@4.6.2/+esm";
+import QRCode from "../assets/js/vendor/easyqrcodejs.js";
 
 export function generateQR(container, text) {
     container.innerHTML = ""; // eski QR temizle

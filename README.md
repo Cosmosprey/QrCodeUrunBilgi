@@ -125,7 +125,7 @@ The generated URL follows the general structure:
 `https://your-domain.com/product/product.html?id=PRODUCT_ID`
 
 **Note on Local Development & Mobile Testing:**  
-When running the project locally (e.g., via Live Server), smartphone cameras cannot resolve `localhost`. To scan and test QR codes on a physical device over the same local network, replace the base IP address in `admin/admin_script.js` with your computer's local IPv4 address (e.g., `http://192.168.1.X:5500/product/product.html?id=PRODUCT_ID`).
+When running the project locally (e.g., via Live Server), smartphone cameras cannot resolve `localhost`. To scan and test QR codes on a physical device over the same local network, replace `SITE_URL` in `admin/qr-modal.js` with your computer's local IPv4 address (e.g., `http://192.168.1.X:5500/product/product.html?id=PRODUCT_ID`).
 
 When the QR code is scanned, the product ID is read from the URL and the corresponding product information is loaded dynamically.
 
@@ -158,7 +158,7 @@ There is no custom backend server or traditional SQL database in the current imp
 
 ### QR Code
 
-- EasyQRCodeJS
+- EasyQRCodeJS 4.6.2 (MIT), included in the repository under `assets/js/vendor/`, so no CDN is needed for QR codes
 
 QR codes are generated dynamically from product-specific URLs.
 
@@ -168,12 +168,14 @@ QR codes are generated dynamically from product-specific URLs.
 
 The project is separated into two main user-facing areas:
 
-* `admin/` — Product management interface
+* `admin/` — Product management interface. `admin_script.js` only wires small modules together: `auth-ui.js` (login), `product-list.js` (cards, search, paging, delete), `product-form.js` (add / edit), `qr-modal.js` (QR window), plus helpers for image upload and the pure list logic.
 * `product/` — Customer-facing product page
 
-* `shared/` — Code used by both areas (Firebase initialisation and configuration)
+* `shared/` — Code used by both areas (Firebase initialisation and configuration, safe DOM helpers, the pure date / stock / discount logic and the store settings)
 
-Shared frontend resources such as CSS, Bootstrap files, icons, fonts, and JavaScript libraries are stored under `assets/`.
+Shared frontend resources are stored under `assets/`: one stylesheet per page (`css/admin.css`, `css/product.css`) next to Bootstrap and Bootstrap Icons, and the QR library under `js/vendor/`.
+
+Both pages carry a Content Security Policy (`<meta>` tag) that only allows scripts from the page's own files and `www.gstatic.com` (the Firebase SDK). The pages contain no inline scripts or event handlers.
 
 ---
 
@@ -403,7 +405,7 @@ The core functionality of the project has been implemented.
 * Expiry-based promotional logic
 * Responsive customer interface
 * Separate admin and customer page structures
-* Local frontend assets
+* Local frontend assets (Bootstrap, Bootstrap Icons and the QR library are included; only the Firebase SDK is loaded from Google's CDN)
 
 ---
 
