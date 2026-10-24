@@ -208,7 +208,7 @@ Replace the empty values with the configuration values from your own Firebase pr
 
 ### Developing without a Firebase project
 
-The Firebase Emulator Suite can stand in for a real project (requires Node.js and Java):
+The Firebase Emulator Suite can stand in for a real project (requires Node.js 24.12 or newer, which is the current LTS line, and Java). The web pages themselves need no Node.js at all, only the emulators and the tests do:
 
 ```bash
 npm install
@@ -223,7 +223,7 @@ In `shared/firebase-config.js` set `projectId` to `demo-qr-product-info` and `us
 npm test
 ```
 
-This starts the Firestore and Storage emulators and runs the security rules tests (who may read, write and upload what, and which invalid data is rejected) together with the unit tests in `tests/`. It needs Node.js 20 or newer and Java.
+This starts the Firestore and Storage emulators and runs the security rules tests (who may read, write and upload what, and which invalid data is rejected) together with the unit tests in `tests/`. It needs Node.js 24.12 or newer and Java.
 
 ### Required Firebase Services
 

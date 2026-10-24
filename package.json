@@ -6,7 +6,7 @@
   "description": "QR code based product information system (vanilla JS + Firebase).",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=24.12.0"
   },
   "scripts": {
     "emulators": "firebase emulators:start --project demo-qr-product-info",
@@ -15,8 +15,8 @@
     "test:unit": "node --test tests/helpers.test.js tests/product-logic.test.js tests/list-logic.test.js tests/sdk-version.test.js"
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "^5.0.2",
-    "firebase": "12.19.0",
+    "@firebase/rules-unit-testing": "6.0.0",
+    "firebase": "13.1.0",
     "firebase-tools": "^15.34.1"
   }
 }
