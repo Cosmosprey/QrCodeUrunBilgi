@@ -1,4 +1,4 @@
-import { db, doc, getDoc } from "./firebase.js";
+import { db, doc, getDoc } from "../shared/firebase.js";
 
 const params = new URLSearchParams(window.location.search);
 const productId = params.get("id");

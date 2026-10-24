@@ -25,5 +25,13 @@ yarn-error.log*
 !.env.example
 
 
+# Dependencies
+node_modules/
+
 # Firebase / local configuration
-firebase-config.local.js
+# Copy shared/firebase-config.example.js to shared/firebase-config.js and fill it in.
+shared/firebase-config.js
+firebase-debug.log*
+firestore-debug.log
+ui-debug.log
+.emulator-data/
