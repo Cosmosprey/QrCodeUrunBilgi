@@ -1,10 +1,11 @@
 import { db, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "../shared/firebase.js";
 import {
     auth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
-    storage, ref, uploadBytes, getDownloadURL
+    storage, ref, uploadBytes, getDownloadURL, deleteObject
 } from "./firebase-admin.js";
 import { generateQR } from "./easyqrcodejs.js";
 import { el, safeHttpUrl } from "../shared/dom.js";
+import { stockStatus, nextPriceUpdateDate, validateExpiryDate, formatPrice } from "../shared/product-logic.js";
 import { usernameToEmail } from "./username.js";
 import { validateImageFile, storagePathFor } from "./upload.js";
 // --- GLOBAL STATE ---
@@ -13,11 +14,6 @@ let editingId = null;
 let currentImageUrl = "";
 let currentPage = 0;
 const itemsPerPage = 4;
-
-// Son kullanma tarihi validation
-const today = new Date().toISOString().split('T')[0];// Bugünün tarihini YYYY-MM-DD formatında alıyoruz
-document.getElementById("lastUseDate").setAttribute("min", today);// Son kullanma tarihi bugünden küçük olamaz
-
 
 // --- AUTH (LOGIN / LOGOUT) ---
 const loginView = document.getElementById("login-view");
@@ -100,6 +96,16 @@ async function uploadImage(file) {
     return url;
 }
 
+// Removes an image from Storage. A failure only leaves an unused file behind, so it never blocks the user.
+async function deleteImageQuietly(url) {
+    if (!safeHttpUrl(url)) return;
+    try {
+        await deleteObject(ref(storage, url));
+    } catch (err) {
+        console.warn("Görsel silinemedi (önemli değil):", err);
+    }
+}
+
 // --- FORM SUBMIT (ADD / UPDATE)
 document.getElementById("product-form").addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -113,26 +119,45 @@ document.getElementById("product-form").addEventListener("submit", async functio
         return;
     }
 
+    const dateType = document.querySelector('input[name="dateType"]:checked').value;
+    const dateProblem = validateExpiryDate({
+        dateType,
+        dateString: document.getElementById("lastUseDate").value,
+        isNewProduct: !editingId
+    });
+    if (dateProblem) {
+        showMessage(formError, dateProblem);
+        return;
+    }
+
     const submitButton = document.getElementById("submit-btn");
     submitButton.disabled = true;
 
     try {
+        const previous = editingId ? products.find(x => x.id === editingId) : undefined;
+        const oldImageUrl = currentImageUrl;
         let imageUrl = currentImageUrl;
 
         if (file) {
             imageUrl = await uploadImage(file);
         }
 
+        const price = Number(document.getElementById("price").value);
         const productData = {
             name: document.getElementById("name").value,
-            price: Number(document.getElementById("price").value),
+            price,
             category: document.getElementById("category").value,
             description: document.getElementById("description").value,
-            dateType: document.querySelector('input[name="dateType"]:checked').value,
+            dateType,
             lastUseDate: document.getElementById("lastUseDate").value,
             image: imageUrl,
             stockCount: Number(document.getElementById("stockCount").value),
-            priceLastUpdate: new Date().toISOString().split('T')[0] // Fiyatın değiştiği son tarihi kaydeder
+            // Fiyatın değiştiği son tarih: sadece yeni üründe veya fiyat değişince bugüne ayarlanır
+            priceLastUpdate: nextPriceUpdateDate({
+                previousPrice: previous?.price,
+                previousDate: previous?.priceLastUpdate,
+                newPrice: price
+            })
         };
 
 
@@ -141,6 +166,11 @@ document.getElementById("product-form").addEventListener("submit", async functio
             await updateDoc(refDoc, productData);
         } else {
             await addDoc(collection(db, "products"), productData);
+        }
+
+        // Yeni görsel yüklendiyse eskisi artık kullanılmıyor
+        if (file && oldImageUrl && oldImageUrl !== imageUrl) {
+            await deleteImageQuietly(oldImageUrl);
         }
 
         resetForm();
@@ -187,18 +217,19 @@ async function fetchProducts() {
     renderProducts();
 }
 
-function stockBadge(count) {
-    if (count > 10) {
-        return { className: "bg-success", text: `Stok: ${count}` }; // Yeşil - Sorun yok
+function stockBadge(value) {
+    const stock = stockStatus(value);
+    if (stock.level === "ok") {
+        return { className: "bg-success", text: `Stok: ${stock.count}` }; // Yeşil - Sorun yok
     }
-    if (count > 0) {
-        return { className: "bg-warning text-dark", text: `Kritik Stok: ${count}` }; // Turuncu - Takip et!
+    if (stock.level === "low") {
+        return { className: "bg-warning text-dark", text: `Kritik Stok: ${stock.count}` }; // Turuncu - Takip et!
     }
     return { className: "bg-danger", text: "Tükendi" }; // Kırmızı - Hemen sipariş ver!
 }
 
 function buildProductCard(p) {
-    const badge = stockBadge(Number(p.stockCount) || 0);
+    const badge = stockBadge(p.stockCount);
     const imageUrl = safeHttpUrl(p.image);
 
     return el("div", { className: "product-card d-flex flex-column position-relative shadow" }, [
@@ -207,7 +238,7 @@ function buildProductCard(p) {
         el("div", { className: "p-3 d-flex flex-column flex-grow-1" }, [
             el("div", { className: "d-flex justify-content-between align-items-center mb-1" }, [
                 el("h6", { className: "mb-0 fw-bold text-white text-truncate", text: String(p.name ?? ""), attrs: { style: "max-width:120px" } }),
-                el("span", { className: "text-primary fw-bold", text: `${p.price}₺` })
+                el("span", { className: "text-primary fw-bold", text: formatPrice(p.price) })
             ]),
             el("p", { className: "product-desc", text: p.description || "Açıklama yok." }),
             el("div", { className: "mt-auto d-flex gap-2" }, [
@@ -237,6 +268,9 @@ function renderProducts() {
     const searchTerm = document.getElementById('search-input').value.toLocaleLowerCase('tr');
     const filtered = products.filter(p => String(p.name ?? "").toLocaleLowerCase('tr').includes(searchTerm));
 
+    // Silme sonrası olmayan bir sayfada kalma
+    currentPage = Math.min(currentPage, Math.max(0, Math.ceil(filtered.length / itemsPerPage) - 1));
+
     const start = currentPage * itemsPerPage;
     const pageItems = filtered.slice(start, start + itemsPerPage);
 
@@ -251,13 +285,13 @@ function handleEdit(id) {
     const p = products.find(x => x.id === id);
     if (!p) return;
 
-    document.getElementById("name").value = p.name;
+    document.getElementById("name").value = p.name ?? "";
     document.getElementById("price").value = p.price;
     document.getElementById("category").value = p.category;
-    document.getElementById("description").value = p.description;
-    document.getElementById("lastUseDate").value = p.lastUseDate;
+    document.getElementById("description").value = p.description ?? "";
+    document.getElementById("lastUseDate").value = p.lastUseDate ?? "";
     document.getElementById("stockCount").value = p.stockCount;
-    currentImageUrl = p.image;
+    currentImageUrl = p.image ?? "";
 
     // Eğer eski bir kayıtsa ve dateType yoksa, varsayılan olarak "SKT" seçili gelsin
     const dt = p.dateType || "SKT";
@@ -278,7 +312,9 @@ function handleEdit(id) {
 async function handleDelete(id) {
     if (confirm("Silmek istiyor musun?")) {
         try {
+            const imageUrl = products.find(x => x.id === id)?.image;
             await deleteDoc(doc(db, "products", id));
+            await deleteImageQuietly(imageUrl);
             await fetchProducts();
         } catch (err) {
             console.error("Silme hatası:", err);

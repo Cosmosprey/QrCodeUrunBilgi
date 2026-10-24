@@ -25,6 +25,14 @@
         <p class="text-dark">Lütfen QR kodu tekrar okutun veya yöneticiyle iletişime geçin.</p>
     </div>
 
+    <!-- Bağlantı Sorunu (ürün var olabilir ama bilgiler alınamadı) -->
+    <div id="load-error" class="container text-center d-none" style="margin-top: 100px;">
+        <i class="bi bi-wifi-off text-warning" style="font-size: 3rem;"></i>
+        <h3 class="mt-3 text-dark">Bağlantı Sorunu</h3>
+        <p class="text-dark">Ürün bilgileri alınamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.</p>
+        <button id="retry-btn" type="button" class="btn btn-primary">Tekrar Dene</button>
+    </div>
+
     <!-- Ürün İçeriği (Başlangıçta Gizli) -->
     <div id="product-card" class="d-none">
         <div class="hero-section">
