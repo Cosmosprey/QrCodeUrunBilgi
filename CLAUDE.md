@@ -47,6 +47,8 @@ firestore.rules, storage.rules   security rules (the admin is identified by a UI
 
 No inline scripts or inline event handlers (`onclick=` etc.): both HTML files carry a Content Security Policy `<meta>` tag (`script-src 'self' https://www.gstatic.com`). Attach events with `addEventListener`. If you add another script host, update the tag in **both** pages. Third-party libraries are vendored under `assets/js/vendor/` (see its README), not loaded from CDNs; the Firebase SDK is the one exception.
 
+The Firebase SDK is loaded from Google's CDN at a fixed version (the `gstatic.com/firebasejs/<version>/` URLs in `shared/firebase.js` and `admin/firebase-admin.js`). That version must equal the `firebase` dev dependency in `package.json`; `tests/sdk-version.test.js` fails when they drift apart, so update them together. The project is on Firebase 13.x. Its test helper `@firebase/rules-unit-testing` 6 declares Node 24.12 or newer, so `engines` says `>=24.12.0` (the web pages themselves need no Node).
+
 The customer page must not import Auth or Storage: it only loads `shared/firebase.js` (app + Firestore). Admin-only Firebase services live in `admin/firebase-admin.js`.
 
 Existing HTML/JS files use CRLF line endings; keep them that way so diffs stay small. New files use LF.
@@ -69,7 +71,9 @@ The admin is identified by the UID constant in `firestore.rules` / `storage.rule
 
 ## Environment caveat
 
-In the Claude Code cloud sandbox, `www.gstatic.com` (Firebase SDK) and `cdn.jsdelivr.net` (QR library) are blocked by the network policy. Pure logic (date, stock, discount) and Firestore/Storage rules (via the emulator) can be tested directly. For a real-browser check in the sandbox, bundle the `firebase` and `easyqrcodejs` npm packages with esbuild in a scratch folder and let Playwright serve them for the blocked CDN URLs with `context.route` (every `gstatic` URL can re-export one single bundle so there is only one SDK instance). Keep that scratch setup out of the repository.
+The cloud sandbox's default Node is 22. Install Node 24 for a session without touching the system: `npm install --no-save node@24` and put `node_modules/node/bin` first on `PATH`. The tests also pass on Node 22 (npm only warns), but 24 is the supported one.
+
+Whether the sandbox can reach `www.gstatic.com` (Firebase SDK) depends on the environment's network access setting. With full access, browser checks can use the real CDN (Playwright against the emulators, no interception). With limited access the CDN is blocked: pure logic and the rules (via the emulator) can still be tested directly, and for a real-browser check bundle the `firebase` npm package with esbuild in a scratch folder and let Playwright serve it for the blocked URLs with `context.route` (every `gstatic` URL can re-export one single bundle so there is only one SDK instance). Keep any such scratch setup out of the repository.
 
 ## Roadmap
 
