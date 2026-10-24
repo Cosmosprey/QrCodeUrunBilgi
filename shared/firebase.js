@@ -1,5 +1,6 @@
-// Single place where the Firebase SDK is loaded and initialised.
+// Single place where the Firebase app and Firestore are initialised.
 // Both the admin panel and the customer page import from here.
+// Authentication and Storage are only needed by the admin panel: see admin/firebase-admin.js.
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 
@@ -14,14 +15,6 @@ import {
   updateDoc,
   getDoc
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-
-import {
-  getStorage,
-  connectStorageEmulator,
-  ref,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
 
 // The config file is git-ignored and created by the person who sets the project up.
 // It is loaded dynamically so a missing file produces a clear message instead of a blank page.
@@ -38,16 +31,15 @@ const { firebaseConfig, useEmulator = false } = config;
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 if (useEmulator) {
   // Use the page's own hostname so a phone on the same network reaches the emulators on the dev machine.
-  const host = window.location.hostname;
-  connectFirestoreEmulator(db, host, 8080);
-  connectStorageEmulator(storage, host, 9199);
+  connectFirestoreEmulator(db, window.location.hostname, 8080);
 }
 
 export {
+  app,
+  useEmulator,
   db,
   collection,
   addDoc,
@@ -57,5 +49,3 @@ export {
   updateDoc,
   getDoc
 };
-
-export { storage, ref, uploadBytes, getDownloadURL };
