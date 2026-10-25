@@ -6,6 +6,17 @@
 import { storeConfig } from "./store-config.js";
 import { intlLocale } from "./i18n-core.js";
 
+/**
+ * True when `id` can be the id of a Firestore document: not empty, not "." or "..", no slash, not of the form
+ * "__name__", at most 1500 bytes. Anything else cannot be a product (it is a mistyped or made-up address), which
+ * is different from a product that exists but cannot be loaded right now.
+ */
+export function isValidProductId(id) {
+    if (typeof id !== "string" || id === "" || id === "." || id === "..") return false;
+    if (id.includes("/") || /^__.*__$/.test(id)) return false;
+    return new TextEncoder().encode(id).length <= 1500;
+}
+
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 

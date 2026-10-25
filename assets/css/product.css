@@ -135,8 +135,15 @@ body.product-theme {
    ANIMATIONS
 ========================= */
 
-.product-theme .animate-pulse {
-    animation: pulse-animation 2s infinite;
+/* The animations never stop, so they only run for visitors who have not asked for less motion */
+@media (prefers-reduced-motion: no-preference) {
+    .product-theme .animate-pulse {
+        animation: pulse-animation 2s infinite;
+    }
+
+    .product-theme .animate-bounce {
+        animation: bounce 2s infinite;
+    }
 }
 
 @keyframes pulse-animation {
@@ -152,10 +159,6 @@ body.product-theme {
     100% {
         transform: scale(1);
     }
-}
-
-.product-theme .animate-bounce {
-    animation: bounce 2s infinite;
 }
 
 @keyframes bounce {

@@ -7,7 +7,8 @@ import {
     discountFor,
     formatPrice,
     formatDate,
-    categoryKey
+    categoryKey,
+    isValidProductId
 } from "../shared/product-logic.js";
 import { t, tParts, getLanguage, onLanguageChange } from "../shared/i18n.js";
 
@@ -32,15 +33,15 @@ function renderStock(stockEl, stockCount) {
     const base = "badge rounded-pill shadow-sm px-3 py-2";
 
     if (stock.level === "ok") {
-        // GÜVENLİ: limitten fazla (YEŞİL)
+        // SAFE: above the limit (green)
         stockEl.textContent = t("product.stock.ok");
         stockEl.className = `${base} bg-success`;
     } else if (stock.level === "low") {
-        // KRİTİK: limit ve altı (TURUNCU)
+        // CRITICAL: at or below the limit (orange)
         stockEl.textContent = t("product.stock.low", { count: stock.count });
         stockEl.className = `${base} bg-warning text-dark fw-bold animate-pulse`;
     } else {
-        // TÜKENDİ (KIRMIZI)
+        // OUT OF STOCK (red)
         stockEl.textContent = t("product.stock.out");
         stockEl.className = `${base} bg-danger`;
     }
@@ -59,9 +60,9 @@ function expiryText(status) {
     }
 }
 
-// SKT / TETT kutusu: tür rozeti, tarih ve kalan süre
+// The SKT / TETT box: the type badge, the date and the time left
 function renderDateBox(boxEl, p, status) {
-    // MEVZUAT MANTIĞI: Eski ürünlerde dateType yoksa varsayılan SKT yap
+    // An old record may have no dateType: it counts as SKT
     const dateType = p.dateType === "TETT" ? "TETT" : "SKT";
     const dateLabel = dateType === "TETT" ? t("product.date.tett") : t("product.date.skt");
 
@@ -135,7 +136,7 @@ function buildCoupon(discount) {
     ]);
 }
 
-// Fiyat, son güncelleme tarihi ve (uygunsa) indirim kuponu
+// The price, the date it last changed and (when eligible) the discount coupon
 function renderPrice(priceEl, p, now) {
     const updateNote = el(
         "div",
@@ -214,12 +215,18 @@ async function loadProduct() {
 
     showOnly("loading");
 
+    // An id that cannot be a document id (for example one with a slash) is a product that does not exist
+    if (!isValidProductId(productId)) {
+        showOnly("notFound");
+        return;
+    }
+
     let snap;
     try {
         snap = await getDoc(doc(db, "products", productId));
     } catch (err) {
         // The product may exist; we just could not reach the database.
-        console.error("Firebase Hatası:", err);
+        console.error("Could not load the product:", err);
         showOnly("loadError");
         return;
     }
@@ -235,7 +242,7 @@ async function loadProduct() {
         renderTexts(shownProduct, new Date());
         showOnly("card");
     } catch (err) {
-        console.error("Ürün gösterilemedi:", err);
+        console.error("Could not show the product:", err);
         showOnly("notFound");
     }
 }
