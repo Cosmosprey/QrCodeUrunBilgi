@@ -43,7 +43,10 @@ shared/     code used by both pages (Firebase app + Firestore init, config, safe
 assets/     vendored CSS/JS (Bootstrap, Bootstrap Icons, js/vendor/easyqrcodejs.js) and the page stylesheets
             css/admin.css and css/product.css (each page loads only its own)
 tests/      node:test suites (security rules via the emulators, pure helpers)
+e2e/        Playwright browser tests (they start the emulators; support.js has the shared helpers)
 scripts/    development helpers (emulator seed)
+.github/    CI workflow (lint, format check, npm test, browser tests) and Dependabot for the Actions
+eslint.config.js, .prettierrc.json, playwright.config.js   tooling settings
 firestore.rules, storage.rules   security rules (the admin is identified by a UID constant)
 ```
 
@@ -83,7 +86,18 @@ npm run emulators      # Firestore, Storage, Auth and a static server on http://
 npm run seed           # (emulators running) creates the dev admin: username admin / password admin123
 npm test               # starts the Firestore + Storage emulators and runs tests/*.test.js
 npm run test:unit      # only the pure unit tests (helpers, product logic in 4 time zones), no emulator needed
+npm run test:e2e       # Playwright browser tests in e2e/ (starts the emulators itself; needs the real CDN)
+npm run lint           # ESLint
+npm run format         # Prettier (npm run format:check only checks)
 ```
+
+Before every push run `npm run lint`, `npm run format:check`, `npm test` and `npm run test:e2e`: CI runs the same four and a red CI blocks the merge.
+
+Code quality conventions:
+
+- ESLint (`eslint.config.js`) forbids assigning HTML strings (`innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write`); build elements with `el()` from `shared/dom.js` or use `textContent`. Do not silence a rule with a comment to get past it; fix the code or discuss the rule with the owner.
+- Prettier (`.prettierrc.json`: 4 spaces, 120 columns, no trailing commas, `endOfLine: auto` so each file keeps its CRLF or LF) formats the JavaScript and `assets/css/admin.css` / `product.css`. HTML, Markdown, JSON and the vendored files are left alone.
+- Browser tests: import `test` and `expect` from `e2e/support.js` (it fails every test on uncaught page errors and CSP violations), empty the data with `clearData()` first, fix the date with `page.clock.setFixedTime(NOW)` when texts depend on it, and prefer role/label locators. A new screen or dialog needs an axe check in `e2e/accessibility.spec.js`. `e2e/global-setup.js` refuses to run when `shared/firebase-config.js` does not point at the emulators.
 
 To develop without a real Firebase project, copy the example config, set `projectId` to `demo-qr-product-info` and `useEmulator = true`. Then open `http://localhost:5000/admin/admin.html`. Emulator data is in-memory and lost on restart (run `npm run seed` again).
 
@@ -92,6 +106,8 @@ The admin is identified by the UID constant in `firestore.rules` / `storage.rule
 ## Environment caveat
 
 The cloud sandbox's default Node is 22. Install Node 24 for a session without touching the system: `npm install --no-save node@24` and put `node_modules/node/bin` first on `PATH`. The tests also pass on Node 22 (npm only warns), but 24 is the supported one.
+
+The sandbox already has Chromium and Playwright installed (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`): do not run `playwright install` there. The project's `@playwright/test` version is pinned to the one preinstalled in the sandbox; keep them equal when updating. `npm run test:e2e` leaves no emulator behind (`gracefulShutdown`), but if one ever does, stop it by process id (a `pkill -f firebase` also kills the shell).
 
 Whether the sandbox can reach `www.gstatic.com` (Firebase SDK) depends on the environment's network access setting. With full access, browser checks can use the real CDN (Playwright against the emulators, no interception). With limited access the CDN is blocked: pure logic and the rules (via the emulator) can still be tested directly, and for a real-browser check bundle the `firebase` npm package with esbuild in a scratch folder and let Playwright serve it for the blocked URLs with `context.route` (every `gstatic` URL can re-export one single bundle so there is only one SDK instance). Keep any such scratch setup out of the repository.
 
@@ -107,8 +123,10 @@ Work proceeds phase by phase, one commit series per phase. Before each phase, de
 - [x] **Phase 4b-1 - Accessibility and feedback:** labels and names, landmarks and headings, keyboard-operable QR dialog, contrast, toasts, loading/empty states.
 - [x] **Phase 4b-2 - Images:** photos are shrunk in the browser before upload (1200 px, WebP; small pictures and GIFs untouched; EXIF rotation applied; transparency kept).
 - [x] **Phase 4b-3 - Languages:** TR/EN (shared/i18n.js, two dictionaries, language switch, translated validation messages as codes, English price/date formats).
-- [ ] **Phase 5 - Quality:** ESLint/Prettier, rules tests against the emulator, README and screenshots.
+- [x] **Phase 5 - Quality:** ESLint + Prettier, Playwright browser tests in the repo (with axe accessibility scans), GitHub Actions CI, Dependabot for the Actions.
+- [ ] **Phase 6 - README:** README rewrite and screenshots (Turkish and English, admin panel, QR window, customer page), CI badge.
+- [ ] **Final audit:** the owner asks for a full review (code, tests, security, dependencies) of the finished product; findings are fixed in their own phase.
 
 ## Known issues being worked on
 
-See the roadmap above. Nothing urgent is known; phase 5 (quality: lint/format, browser tests, README screenshots) is next.
+See the roadmap above. Nothing urgent is known; phase 6 (README and screenshots) is next, then the final audit.
