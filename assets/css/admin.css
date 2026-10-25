@@ -403,15 +403,20 @@ body.admin-theme {
 .lang-switch button {
     background: transparent;
     border: 0;
-    color: #cbd5e1;
+    color: #94a3b8; /* the language that is not selected: faded */
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 500;
     padding: 0.3rem 0.7rem;
+}
+
+.lang-switch button:hover {
+    color: #fff;
 }
 
 .lang-switch button[aria-pressed="true"] {
     background: #2563eb;
     color: #fff;
+    font-weight: 700;
 }
 
 .admin-theme .login-wrapper {
