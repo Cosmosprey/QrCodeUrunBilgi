@@ -1,7 +1,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { usernameToEmail, AUTH_EMAIL_DOMAIN } from "../admin/username.js";
-import { validateImageFile, storagePathFor, MAX_IMAGE_BYTES } from "../admin/upload.js";
+import { validateImageFile, storagePathFor, MAX_IMAGE_BYTES, MAX_INPUT_BYTES } from "../admin/upload.js";
 import { safeHttpUrl } from "../shared/dom.js";
 
 describe("usernameToEmail", () => {
@@ -40,8 +40,17 @@ describe("validateImageFile", () => {
         }
     });
 
-    test("rejects files over 2 MB", () => {
-        assert.match(validateImageFile(file("image/png", MAX_IMAGE_BYTES + 1)), /2 MB/);
+    test("photos may be large because they are shrunk before upload, up to 25 MB", () => {
+        for (const type of ["image/jpeg", "image/png", "image/webp"]) {
+            assert.equal(validateImageFile(file(type, 8 * 1024 * 1024)), null, type);
+            assert.equal(validateImageFile(file(type, MAX_INPUT_BYTES)), null, type);
+            assert.match(validateImageFile(file(type, MAX_INPUT_BYTES + 1)), /25 MB/, type);
+        }
+    });
+
+    test("GIFs are not shrunk, so they keep the 2 MB upload limit", () => {
+        assert.equal(validateImageFile(file("image/gif", MAX_IMAGE_BYTES)), null);
+        assert.match(validateImageFile(file("image/gif", MAX_IMAGE_BYTES + 1)), /GIF.*2 MB/);
     });
 
     test("does not treat inherited object properties as allowed types", () => {
