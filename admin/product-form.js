@@ -5,11 +5,14 @@ import { nextPriceUpdateDate, validateExpiryDate } from "../shared/product-logic
 import { validateImageFile } from "./upload.js";
 import { uploadProductImage, deleteProductImage } from "./product-images.js";
 import { showMessage } from "./ui.js";
+import { showToast } from "./toast.js";
 
 const form = document.getElementById("product-form");
 const formError = document.getElementById("form-error");
 const formTitle = document.getElementById("form-title");
 const submitButton = document.getElementById("submit-btn");
+const submitLabel = document.getElementById("submit-label");
+const submitSpinner = document.getElementById("submit-spinner");
 
 let editingId = null;
 let currentImageUrl = "";
@@ -21,6 +24,13 @@ function saveErrorMessage(err) {
         return "Bu işlem için yetkiniz yok veya girilen bilgiler geçersiz.";
     }
     return "Ürün kaydedilemedi. Lütfen tekrar deneyin.";
+}
+
+/** While a save is running the button is disabled and shows a spinner. */
+function setBusy(busy) {
+    submitButton.disabled = busy;
+    submitSpinner.classList.toggle("d-none", !busy);
+    submitButton.setAttribute("aria-busy", String(busy));
 }
 
 /** Puts a product into the form for editing. */
@@ -43,16 +53,16 @@ export function startEdit(p) {
 
     editingId = p.id;
 
-    formTitle.innerText = "Ürünü Düzenle";
-    submitButton.innerText = "GÜNCELLE";
+    formTitle.textContent = "Ürünü Düzenle";
+    submitLabel.textContent = "GÜNCELLE";
     submitButton.className = "btn btn-success w-100 py-3 fw-bold";
 }
 
 export function resetForm() {
     form.reset();
     editingId = null;
-    formTitle.innerText = "Ürün Ekle";
-    submitButton.innerText = "KAYDET";
+    formTitle.textContent = "Ürün Ekle";
+    submitLabel.textContent = "KAYDET";
     submitButton.className = "btn btn-primary w-100 py-3 fw-bold";
     currentImageUrl = "";
     showMessage(formError, "");
@@ -82,7 +92,7 @@ export function initProductForm({ findProduct, onSaved }) {
             return;
         }
 
-        submitButton.disabled = true;
+        setBusy(true);
 
         try {
             const previous = editingId ? findProduct(editingId) : undefined;
@@ -122,13 +132,15 @@ export function initProductForm({ findProduct, onSaved }) {
                 await deleteProductImage(oldImageUrl);
             }
 
+            const wasEditing = Boolean(editingId);
             resetForm();
             await onSaved();
+            showToast(wasEditing ? "Ürün güncellendi." : "Ürün kaydedildi.");
         } catch (err) {
             console.error("Kaydetme hatası:", err);
             showMessage(formError, saveErrorMessage(err));
         } finally {
-            submitButton.disabled = false;
+            setBusy(false);
         }
     });
 }

@@ -30,6 +30,8 @@ The admin panel provides a single-page interface for managing products.
 - Display uploaded product images
 - Generate QR codes for products, download them as PNG or print them
 - Works on phones and tablets (the form moves above the list)
+- Accessible: every field has a label, buttons have names, the QR window works with the keyboard and screen readers (Tab stays inside, Escape closes), and an automated axe-core scan reports no problems on any screen
+- Feedback: success messages (toasts), a spinner on the save and login buttons, and "loading", "no products yet" and "no results" messages in the list
 - Manage product categories
 - Manage product prices
 - Manage product descriptions
@@ -411,6 +413,8 @@ The core functionality of the project has been implemented.
 * Expiry-based promotional logic
 * Responsive customer interface (long names wrap, a missing image shows a placeholder)
 * Responsive admin panel for phones and tablets
+* Accessibility (labels, landmarks, headings, keyboard-operable dialog, contrast)
+* Toast messages, busy buttons and list status messages
 * Separate admin and customer page structures
 * Local frontend assets (Bootstrap, Bootstrap Icons and the QR library are included; only the Firebase SDK is loaded from Google's CDN)
 

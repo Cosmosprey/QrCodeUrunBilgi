@@ -3,9 +3,10 @@
 import { db, collection, getDocs, deleteDoc, doc } from "../shared/firebase.js";
 import { el, safeHttpUrl } from "../shared/dom.js";
 import { stockStatus, formatPrice } from "../shared/product-logic.js";
-import { filterProductsByName, pageInfo } from "./list-logic.js";
+import { filterProductsByName, pageInfo, listState } from "./list-logic.js";
 import { deleteProductImage } from "./product-images.js";
 import { showMessage } from "./ui.js";
+import { showToast } from "./toast.js";
 
 const ITEMS_PER_PAGE = 4;
 
@@ -16,6 +17,7 @@ const nextButton = document.getElementById("nextBtn");
 const listError = document.getElementById("list-error");
 
 let products = [];
+let loaded = false; // true after the first answer from Firestore
 let currentPage = 0;
 let handlers = { onEdit() {}, onShowQr() {}, onAccessDenied() {} };
 
@@ -33,9 +35,9 @@ function stockBadge(value) {
 function actionButton(className, title, icon, onClick) {
     return el("button", {
         className: `btn btn-sm ${className} flex-grow-1`,
-        attrs: { title, type: "button" },
+        attrs: { title, "aria-label": title, type: "button" },
         on: { click: onClick }
-    }, [el("i", { className: `bi ${icon}` })]);
+    }, [el("i", { className: `bi ${icon}`, attrs: { "aria-hidden": "true" } })]);
 }
 
 // A product without a usable image (or whose image fails to load) shows a neutral icon instead of a broken image.
@@ -57,7 +59,7 @@ function buildProductCard(p) {
         imageOrPlaceholder(imageUrl),
         el("div", { className: "p-3 d-flex flex-column flex-grow-1" }, [
             el("div", { className: "d-flex justify-content-between align-items-center mb-1" }, [
-                el("h6", { className: "product-title mb-0 fw-bold text-white text-truncate", text: String(p.name ?? "") }),
+                el("h3", { className: "product-title h6 mb-0 fw-bold text-white text-truncate", text: String(p.name ?? "") }),
                 el("span", { className: "product-price text-primary fw-bold", text: formatPrice(p.price) })
             ]),
             el("p", { className: "product-desc", text: p.description || "Açıklama yok." }),
@@ -70,12 +72,23 @@ function buildProductCard(p) {
     ]);
 }
 
+const STATUS_TEXT = {
+    loading: "Ürünler yükleniyor...",
+    empty: "Henüz ürün yok. Soldaki formdan ilk ürünü ekleyin.",
+    "no-results": "Aramanızla eşleşen ürün bulunamadı."
+};
+
 function renderProducts() {
     const filtered = filterProductsByName(products, searchInput.value);
     const page = pageInfo(filtered.length, currentPage, ITEMS_PER_PAGE);
     currentPage = page.page;
 
-    grid.replaceChildren(...filtered.slice(page.start, page.end).map(buildProductCard));
+    const state = listState({ loaded, total: products.length, matching: filtered.length });
+    if (state === "list") {
+        grid.replaceChildren(...filtered.slice(page.start, page.end).map(buildProductCard));
+    } else {
+        grid.replaceChildren(el("p", { className: "list-status", text: STATUS_TEXT[state] }));
+    }
 
     previousButton.disabled = !page.hasPrevious;
     nextButton.disabled = !page.hasNext;
@@ -89,6 +102,7 @@ async function deleteProduct(id) {
         await deleteDoc(doc(db, "products", id));
         await deleteProductImage(imageUrl);
         await loadProducts();
+        showToast("Ürün silindi.");
     } catch (err) {
         console.error("Silme hatası:", err);
         showMessage(listError, "Ürün silinemedi. Lütfen tekrar deneyin.");
@@ -116,12 +130,15 @@ export function findProduct(id) {
 
 export async function loadProducts() {
     showMessage(listError, "");
+    if (!loaded) renderProducts(); // "Ürünler yükleniyor..." until the first answer
 
     try {
         const snapshot = await getDocs(collection(db, "products"));
         products = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        loaded = true;
     } catch (err) {
         console.error("Ürünler alınamadı:", err);
+        grid.replaceChildren(); // do not leave "yükleniyor" on screen
         if (err?.code === "permission-denied") {
             // Signed in, but not the admin account named in the security rules.
             await handlers.onAccessDenied();
@@ -136,6 +153,7 @@ export async function loadProducts() {
 
 export function clearProducts() {
     products = [];
+    loaded = false;
     currentPage = 0;
     grid.replaceChildren();
 }

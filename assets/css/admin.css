@@ -327,3 +327,53 @@ body.admin-theme {
         word-break: break-all;
     }
 }
+
+/* =========================
+   READABILITY, TOASTS, LIST STATUS
+========================= */
+
+/* The Bootstrap blue is too dark on the dark cards (3.25:1); this lighter blue reaches 5.3:1. Screen only:
+   the printed price stays black (see the print rules below). */
+@media screen {
+    .admin-theme .product-price,
+    .admin-theme #qrPrice {
+        color: #5b9bff !important;
+    }
+}
+
+.admin-theme .list-status {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.admin-theme .toast-region {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: calc(100% - 2rem);
+    pointer-events: none;
+}
+
+.admin-theme .app-toast {
+    pointer-events: auto;
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+    background: #0f3d2e;
+    color: #d1fae5;
+    border: 1px solid #166534;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+@media print {
+    .admin-theme .toast-region {
+        display: none !important;
+    }
+}

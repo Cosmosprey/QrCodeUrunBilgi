@@ -9,6 +9,7 @@ const appView = document.getElementById("app-view");
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const loginButton = document.getElementById("login-btn");
+const loginSpinner = document.getElementById("login-spinner");
 const passwordInput = document.getElementById("login-password");
 
 function loginErrorMessage(err) {
@@ -52,12 +53,14 @@ export function initAuthUi({ onSignedIn, onSignedOut }) {
         }
 
         loginButton.disabled = true;
+        loginSpinner.classList.remove("d-none");
         try {
             await signInWithEmailAndPassword(auth, email, password);
         } catch (err) {
             showMessage(loginError, loginErrorMessage(err));
         } finally {
             loginButton.disabled = false;
+            loginSpinner.classList.add("d-none");
         }
     });
 

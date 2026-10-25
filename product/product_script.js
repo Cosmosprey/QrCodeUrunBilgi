@@ -139,6 +139,7 @@ function renderPrice(priceEl, p, now) {
 
 function renderProduct(p, now) {
     document.getElementById("name").textContent = p.name ?? "";
+    document.title = p.name ? `${p.name} | Ürün Detayı` : "Ürün Detayı";
     document.getElementById("description").textContent = p.description || "Açıklama belirtilmedi.";
     document.getElementById("category").textContent = p.category ?? "";
 
@@ -150,6 +151,7 @@ function renderProduct(p, now) {
         imageEl.classList.toggle("d-none", show);
         placeholderEl.classList.toggle("d-none", !show);
     };
+    imageEl.alt = p.name ?? "";
     showPlaceholder(!imageUrl);
     if (imageUrl) {
         imageEl.addEventListener("error", () => showPlaceholder(true), { once: true });
