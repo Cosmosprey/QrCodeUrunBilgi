@@ -26,7 +26,7 @@ The admin panel provides a single-page interface for managing products.
 - Delete products
 - Search products by name
 - Paginate product cards
-- Upload product images
+- Upload product images (photos up to 25 MB are accepted and shrunk in the browser before upload: longest side 1200 px, WebP; small pictures and GIFs are uploaded as they are)
 - Display uploaded product images
 - Generate QR codes for products, download them as PNG or print them
 - Works on phones and tablets (the form moves above the list)
@@ -253,7 +253,7 @@ What the rules enforce:
 
 * Anyone may read a single product (this is what the QR code opens), but only the admin may list, create, change or delete products.
 * A product must have exactly the fields in the table below, with sane types and sizes (name 2–70 characters, price above 0, whole-number stock, dates as `YYYY-MM-DD`, `SKT` or `TETT`, image URL starting with `http(s)://`).
-* Only the admin may upload images; only JPEG, PNG, WebP and GIF up to 2 MB are accepted (SVG is rejected on purpose, it can carry scripts).
+* Only the admin may upload images; the stored file must be JPEG, PNG, WebP or GIF and at most 2 MB (SVG is rejected on purpose, it can carry scripts). The admin panel shrinks big photos before uploading, so a phone photo of several megabytes becomes a few hundred KB and fits easily.
 * The only other document is `settings/site` (the QR site address): the admin can read and write it, nobody else, and it must be an `http(s)://` address.
 
 The application expects a Firestore collection named:

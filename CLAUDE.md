@@ -34,8 +34,8 @@ Hobby / portfolio project, meant to be downloaded and run on a local network by 
 
 ```
 admin/      admin panel: admin_script.js only wires modules (auth-ui, product-list, product-form, qr-modal);
-            firebase-admin.js (Auth/Storage), product-images, site-settings (Firestore settings/site), toast, upload/username helpers,
-            list-logic and qr-logic (pure), qr.js (wrapper)
+            firebase-admin.js (Auth/Storage), product-images, image-convert (shrinks photos before upload), site-settings (Firestore settings/site), toast,
+            upload/username helpers, list-logic, qr-logic and image-logic (pure), qr.js (wrapper)
 product/    customer-facing product page
 shared/     code used by both pages (Firebase app + Firestore init, config, safe DOM helpers,
             product-logic.js = pure date/stock/discount/price logic, store-config.js = discount and stock settings)
@@ -95,9 +95,10 @@ Work proceeds phase by phase, one commit series per phase. Before each phase, de
 - [x] **Phase 3 - Structure:** remove inline `onclick` handlers and `window.*` assignments, separate the customer page from admin code.
 - [x] **Phase 4a - Usability:** responsive admin (phones/tablets), long names and missing images on the customer page, QR site-address setting (Firestore `settings/site`), QR PNG download and print.
 - [x] **Phase 4b-1 - Accessibility and feedback:** labels and names, landmarks and headings, keyboard-operable QR dialog, contrast, toasts, loading/empty states.
-- [ ] **Phase 4b-2 - Images and languages:** image downscaling before upload, TR/EN.
+- [x] **Phase 4b-2 - Images:** photos are shrunk in the browser before upload (1200 px, WebP; small pictures and GIFs untouched; EXIF rotation applied; transparency kept).
+- [ ] **Phase 4b-3 - Languages:** TR/EN (shared/i18n.js, two dictionaries, language switch, translated validation messages as codes, English price/date formats).
 - [ ] **Phase 5 - Quality:** ESLint/Prettier, rules tests against the emulator, README and screenshots.
 
 ## Known issues being worked on
 
-See the roadmap above. The most important ones now: photos from a phone are often over the 2 MB upload limit, and the interface is Turkish only (phase 4b-2).
+See the roadmap above. The most important ones now: the interface is Turkish only (phase 4b-3).

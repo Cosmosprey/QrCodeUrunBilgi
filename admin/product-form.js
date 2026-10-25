@@ -4,6 +4,8 @@ import { db, collection, addDoc, doc, updateDoc } from "../shared/firebase.js";
 import { nextPriceUpdateDate, validateExpiryDate } from "../shared/product-logic.js";
 import { validateImageFile } from "./upload.js";
 import { uploadProductImage, deleteProductImage } from "./product-images.js";
+import { prepareImage, ImageError } from "./image-convert.js";
+import { formatBytes } from "./image-logic.js";
 import { showMessage } from "./ui.js";
 import { showToast } from "./toast.js";
 
@@ -20,6 +22,11 @@ let currentImageUrl = "";
 const field = (id) => document.getElementById(id);
 
 function saveErrorMessage(err) {
+    if (err instanceof ImageError) {
+        return err.code === "too-large"
+            ? "Görsel yeterince küçültülemedi. Daha küçük bir görsel seçin."
+            : "Görsel okunamadı. Başka bir görsel deneyin.";
+    }
     if (err?.code === "permission-denied" || err?.code === "storage/unauthorized") {
         return "Bu işlem için yetkiniz yok veya girilen bilgiler geçersiz.";
     }
@@ -74,8 +81,8 @@ export function initProductForm({ findProduct, onSaved }) {
         e.preventDefault();
         showMessage(formError, "");
 
-        const file = field("imageFile").files[0];
-        const fileProblem = validateImageFile(file);
+        const picked = field("imageFile").files[0];
+        const fileProblem = validateImageFile(picked);
         if (fileProblem) {
             showMessage(formError, fileProblem);
             return;
@@ -98,6 +105,10 @@ export function initProductForm({ findProduct, onSaved }) {
             const previous = editingId ? findProduct(editingId) : undefined;
             const oldImageUrl = currentImageUrl;
             let imageUrl = currentImageUrl;
+
+            // Big photos are shrunk in the browser first; the picked file is kept for small pictures and GIFs.
+            const prepared = picked ? await prepareImage(picked) : null;
+            const file = prepared?.file;
 
             if (file) {
                 imageUrl = await uploadProductImage(file);
@@ -135,7 +146,10 @@ export function initProductForm({ findProduct, onSaved }) {
             const wasEditing = Boolean(editingId);
             resetForm();
             await onSaved();
-            showToast(wasEditing ? "Ürün güncellendi." : "Ürün kaydedildi.");
+            const saved = wasEditing ? "Ürün güncellendi." : "Ürün kaydedildi.";
+            showToast(prepared?.converted
+                ? `${saved} Görsel küçültüldü: ${formatBytes(picked.size)} → ${formatBytes(file.size)}.`
+                : saved);
         } catch (err) {
             console.error("Kaydetme hatası:", err);
             showMessage(formError, saveErrorMessage(err));
