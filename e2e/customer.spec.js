@@ -1,6 +1,15 @@
 // The customer page that a QR code opens.
 
-import { test, expect, NOW, clearData, addProduct, updateProductFields, removeProduct } from "./support.js";
+import {
+    test,
+    expect,
+    NOW,
+    clearData,
+    addProduct,
+    expectNoSidewaysScroll,
+    updateProductFields,
+    removeProduct
+} from "./support.js";
 
 test.beforeEach(async ({ page }) => {
     await clearData();
@@ -213,11 +222,5 @@ test("needs no sideways scrolling at 320 px with text twice as big", async ({ pa
             description: "B".repeat(300)
         })
     );
-    await page.evaluate(() => {
-        document.documentElement.style.fontSize = "200%";
-    });
-    const overflow = await page.evaluate(
-        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
-    );
-    expect(overflow).toBeLessThanOrEqual(0);
+    await expectNoSidewaysScroll(page);
 });

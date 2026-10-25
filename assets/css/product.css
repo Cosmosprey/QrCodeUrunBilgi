@@ -184,6 +184,13 @@ body.product-theme {
     overflow-wrap: anywhere;
 }
 
+/* A badge never wraps by itself (Bootstrap), so a long label such as "ONLY 3 LEFT!" in large letters would be wider than the page */
+.product-theme #stock {
+    white-space: normal;
+    max-width: 100%;
+    text-align: center;
+}
+
 .product-theme .content-segment {
     min-width: 0;
 }

@@ -189,6 +189,16 @@ body.admin-theme {
     white-space: nowrap;
 }
 
+/*
+ * The title of the panel stays on one line next to the language switch on a wide screen. On a phone it may wrap:
+ * with large text it would be wider than the screen.
+ */
+@media (min-width: 992px) {
+    .admin-theme .panel-title {
+        white-space: nowrap;
+    }
+}
+
 /* While a save is running the product cards cannot start another edit or delete (see admin/product-form.js) */
 .admin-theme.is-saving .product-card .btn:not(.btn-primary) {
     opacity: 0.5;

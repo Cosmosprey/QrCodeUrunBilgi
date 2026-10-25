@@ -7,6 +7,7 @@ import {
     TINY_PNG,
     clearData,
     addProduct,
+    expectNoSidewaysScroll,
     removeProduct,
     storedProducts,
     signIn,
@@ -231,11 +232,5 @@ test("needs no sideways scrolling at 320 px with text twice as big", async ({ pa
     await page.setViewportSize({ width: 320, height: 568 });
     await signIn(page);
     await expect(page.locator(".product-card")).toHaveCount(1);
-    await page.evaluate(() => {
-        document.documentElement.style.fontSize = "200%";
-    });
-    const overflow = await page.evaluate(
-        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
-    );
-    expect(overflow).toBeLessThanOrEqual(0);
+    await expectNoSidewaysScroll(page);
 });

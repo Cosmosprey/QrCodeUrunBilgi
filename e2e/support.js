@@ -147,6 +147,34 @@ export async function fillProductForm(page, { name, price, stockCount, lastUseDa
 }
 
 /**
+ * Makes the text twice as big and checks that the page needs no sideways scrolling. It is checked with the page's own
+ * font and with a wide one: a computer that does not have the font of the stylesheet (a CI machine, for one) falls
+ * back to something wider, and what fits in a narrow font may stick out in a wide one.
+ */
+export async function expectNoSidewaysScroll(page) {
+    await page.evaluate(() => {
+        document.documentElement.style.fontSize = "200%";
+    });
+    for (const font of [null, '"DejaVu Sans", sans-serif']) {
+        if (font) await page.addStyleTag({ content: `* { font-family: ${font} !important; }` });
+        const report = await page.evaluate(() => {
+            const width = document.documentElement.clientWidth;
+            return {
+                overflow: document.documentElement.scrollWidth - width,
+                offenders: [...document.querySelectorAll("body *")]
+                    .filter((element) => element.getBoundingClientRect().right > width + 0.5)
+                    .slice(0, 5)
+                    .map((element) => `${element.tagName.toLowerCase()}#${element.id}.${element.className}`)
+            };
+        });
+        expect(
+            report.overflow,
+            `sticking out with the ${font ? "wide" : "own"} font: ${report.offenders.join(", ")}`
+        ).toBeLessThanOrEqual(0);
+    }
+}
+
+/**
  * Runs the axe accessibility checker on what is on screen now and returns the violations (none is expected).
  * Transitions and animations are switched off first: axe measures the colours it finds at that moment, and halfway
  * through a button's hover transition they are blends of the start and end colours with too little contrast. That is
