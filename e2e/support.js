@@ -77,6 +77,23 @@ export async function addProduct(overrides = {}) {
     return body.name.split("/").pop();
 }
 
+/** Changes some fields of a stored product straight in the emulator (what another device would have done). */
+export async function updateProductFields(id, fields) {
+    const mask = Object.keys(fields)
+        .map((name) => `updateMask.fieldPaths=${name}`)
+        .join("&");
+    await fetch(`${DOCUMENTS}/products/${id}?${mask}`, {
+        method: "PATCH",
+        headers: HEADERS,
+        body: JSON.stringify({ fields: Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, field(v)])) })
+    });
+}
+
+/** Deletes a stored product straight in the emulator. */
+export async function removeProduct(id) {
+    await fetch(`${DOCUMENTS}/products/${id}`, { method: "DELETE", headers: HEADERS });
+}
+
 /** The stored products as plain objects (with their id), to check what the pages saved. */
 export async function storedProducts() {
     const response = await fetch(`${DOCUMENTS}/products`, { headers: HEADERS });
@@ -127,6 +144,34 @@ export async function fillProductForm(page, { name, price, stockCount, lastUseDa
     if (stockCount !== undefined) await page.locator("#stockCount").fill(String(stockCount));
     if (lastUseDate !== undefined) await page.locator("#lastUseDate").fill(lastUseDate);
     if (description !== undefined) await page.locator("#description").fill(description);
+}
+
+/**
+ * Makes the text twice as big and checks that the page needs no sideways scrolling. It is checked with the page's own
+ * font and with a wide one: a computer that does not have the font of the stylesheet (a CI machine, for one) falls
+ * back to something wider, and what fits in a narrow font may stick out in a wide one.
+ */
+export async function expectNoSidewaysScroll(page) {
+    await page.evaluate(() => {
+        document.documentElement.style.fontSize = "200%";
+    });
+    for (const font of [null, '"DejaVu Sans", sans-serif']) {
+        if (font) await page.addStyleTag({ content: `* { font-family: ${font} !important; }` });
+        const report = await page.evaluate(() => {
+            const width = document.documentElement.clientWidth;
+            return {
+                overflow: document.documentElement.scrollWidth - width,
+                offenders: [...document.querySelectorAll("body *")]
+                    .filter((element) => element.getBoundingClientRect().right > width + 0.5)
+                    .slice(0, 5)
+                    .map((element) => `${element.tagName.toLowerCase()}#${element.id}.${element.className}`)
+            };
+        });
+        expect(
+            report.overflow,
+            `sticking out with the ${font ? "wide" : "own"} font: ${report.offenders.join(", ")}`
+        ).toBeLessThanOrEqual(0);
+    }
 }
 
 /**

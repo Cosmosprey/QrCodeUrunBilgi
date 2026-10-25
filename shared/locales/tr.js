@@ -71,6 +71,9 @@ export const tr = {
     "error.save.imageTooLarge": "Görsel yeterince küçültülemedi. Daha küçük bir görsel seçin.",
     "error.save.imageUnreadable": "Görsel okunamadı. Başka bir görsel deneyin.",
     "error.save.denied": "Bu işlem için yetkiniz yok veya girilen bilgiler geçersiz.",
+    "error.save.conflict":
+        "Bu ürün başka bir yerde değiştirilmiş. Liste yenilendi: güncel değerlere bakıp tekrar düzenleyin.",
+    "error.save.gone": "Bu ürün artık yok (başka bir yerde silinmiş). Liste yenilendi.",
     "error.save.failed": "Ürün kaydedilemedi. Lütfen tekrar deneyin.",
 
     // ---- messages returned by the pure validation functions

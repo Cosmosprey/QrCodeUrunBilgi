@@ -1,9 +1,10 @@
 // The add / edit form of the admin panel.
 
-import { db, collection, addDoc, doc, updateDoc } from "../shared/firebase.js";
+import { db, collection, addDoc, doc, runTransaction } from "../shared/firebase.js";
 import { nextPriceUpdateDate, validateExpiryDate } from "../shared/product-logic.js";
 import { validateImageFile } from "./upload.js";
 import { validateProductFields } from "./product-validation.js";
+import { hasChanged } from "./product-conflict.js";
 import { uploadProductImage, deleteProductImage } from "./product-images.js";
 import { prepareImage, ImageError } from "./image-convert.js";
 import { formatBytes } from "./image-logic.js";
@@ -21,8 +22,17 @@ const cancelButton = document.getElementById("cancel-edit-btn");
 const categorySelect = document.getElementById("category");
 
 let editingId = null;
+let editingSnapshot = null; // the product as the admin saw it when the edit began: compared with the database on save
 let currentImageUrl = "";
 let saving = false;
+
+/** The product was changed or deleted somewhere else (another tab, another device) while it was being edited. */
+class SaveConflict extends Error {
+    constructor(code) {
+        super(code);
+        this.code = code; // "changed" or "gone"
+    }
+}
 
 const field = (id) => document.getElementById(id);
 
@@ -90,6 +100,7 @@ export function startEdit(product) {
     if (radio) radio.checked = true;
 
     editingId = product.id;
+    editingSnapshot = product;
     showMessage(formError, "");
     renderMode();
 
@@ -102,6 +113,7 @@ export function resetForm() {
     form.reset();
     categorySelect.querySelector("option[data-extra]")?.remove();
     editingId = null;
+    editingSnapshot = null;
     currentImageUrl = "";
     showMessage(formError, "");
     renderMode();
@@ -112,8 +124,33 @@ export function cancelEditOf(id) {
     if (editingId === id) resetForm();
 }
 
-/** Connects the form. findProduct(id) returns the stored product; onSaved() runs after a successful save. */
-export function initProductForm({ findProduct, onSaved }) {
+/**
+ * Saves the changes of a product, unless it was changed or deleted since `seen` (what the admin saw when the edit
+ * began): then nothing is written, because the form holds old values for fields the admin did not touch and would
+ * quietly put them back. The date of the last price change is worked out from the price that is stored now.
+ */
+async function updateProduct(productId, seen, values, image) {
+    const reference = doc(db, "products", productId);
+    await runTransaction(db, async (transaction) => {
+        const snapshot = await transaction.get(reference);
+        if (!snapshot.exists()) throw new SaveConflict("gone");
+        const stored = snapshot.data();
+        if (hasChanged(seen, stored)) throw new SaveConflict("changed");
+
+        transaction.update(reference, {
+            ...values,
+            image,
+            priceLastUpdate: nextPriceUpdateDate({
+                previousPrice: stored.price,
+                previousDate: stored.priceLastUpdate,
+                newPrice: values.price
+            })
+        });
+    });
+}
+
+/** Connects the form. onSaved() runs after a save, and after a conflict, so the list shows what is stored. */
+export function initProductForm({ onSaved }) {
     renderMode();
     onLanguageChange(renderMode);
 
@@ -138,6 +175,7 @@ export function initProductForm({ findProduct, onSaved }) {
             stockCount: Number(field("stockCount").value)
         };
         const productId = editingId;
+        const seen = editingSnapshot;
         const oldImageUrl = currentImageUrl;
 
         const problem =
@@ -156,7 +194,6 @@ export function initProductForm({ findProduct, onSaved }) {
         setBusy(true);
 
         try {
-            const previous = productId ? findProduct(productId) : undefined;
             let imageUrl = oldImageUrl;
 
             // Big photos are shrunk in the browser first; the picked file is kept for small pictures and GIFs.
@@ -167,22 +204,13 @@ export function initProductForm({ findProduct, onSaved }) {
                 imageUrl = await uploadProductImage(file);
             }
 
-            const productData = {
-                ...values,
-                image: imageUrl,
-                // The date the price last changed: set to today only for a new product or when the price changes
-                priceLastUpdate: nextPriceUpdateDate({
-                    previousPrice: previous?.price,
-                    previousDate: previous?.priceLastUpdate,
-                    newPrice: values.price
-                })
-            };
-
             try {
                 if (productId) {
-                    await updateDoc(doc(db, "products", productId), productData);
+                    await updateProduct(productId, seen, values, imageUrl);
                 } else {
-                    await addDoc(collection(db, "products"), productData);
+                    // The date the price last changed: a new product gets today's date
+                    const priceLastUpdate = nextPriceUpdateDate({ newPrice: values.price });
+                    await addDoc(collection(db, "products"), { ...values, image: imageUrl, priceLastUpdate });
                 }
             } catch (err) {
                 // The new picture was uploaded but is not used by any product: do not leave it behind
@@ -209,7 +237,14 @@ export function initProductForm({ findProduct, onSaved }) {
             );
         } catch (err) {
             console.error("Could not save the product:", err);
-            showMessage(formError, saveErrorKey(err));
+            if (err instanceof SaveConflict) {
+                // Show what is stored now, and let the admin start the edit again from there
+                resetForm();
+                await onSaved();
+                showMessage(formError, err.code === "gone" ? "error.save.gone" : "error.save.conflict");
+            } else {
+                showMessage(formError, saveErrorKey(err));
+            }
         } finally {
             setBusy(false);
         }

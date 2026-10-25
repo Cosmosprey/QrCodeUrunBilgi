@@ -8,7 +8,9 @@ import {
     formatPrice,
     formatDate,
     categoryKey,
-    isValidProductId
+    isValidProductId,
+    msUntilNextMidnight,
+    isStale
 } from "../shared/product-logic.js";
 import { t, tParts, getLanguage, onLanguageChange } from "../shared/i18n.js";
 
@@ -238,19 +240,70 @@ async function loadProduct() {
 
     try {
         shownProduct = snap.data();
+        loadedAt = Date.now();
         renderImage(shownProduct);
         renderTexts(shownProduct, new Date());
         showOnly("card");
+        scheduleMidnightRefresh();
     } catch (err) {
         console.error("Could not show the product:", err);
         showOnly("notFound");
     }
 }
 
-// The product being shown, kept so the texts can be redrawn when the language changes.
+// The product being shown, kept so the texts can be redrawn when the language changes or the day changes.
 let shownProduct = null;
+let loadedAt = 0;
+let midnightTimer;
 onLanguageChange(() => {
     if (shownProduct) renderTexts(shownProduct, new Date());
+});
+
+// The page is a snapshot: a phone may keep it open for hours. So the product is read again when the visitor comes
+// back to the page (if the data is older than a minute), and at midnight, when the days left and the coupon change.
+const REFRESH_AFTER_MS = 60 * 1000;
+
+/**
+ * Reads the product again and redraws the page. A failure is not shown: the page keeps what it has (with the days
+ * left worked out again), because the visitor did not ask for anything.
+ */
+async function refreshProduct() {
+    if (!shownProduct) return;
+    try {
+        const snap = await getDoc(doc(db, "products", productId));
+        if (!snap.exists()) {
+            shownProduct = null; // the product was deleted while the page was open
+            showOnly("notFound");
+            return;
+        }
+        const next = snap.data();
+        const pictureChanged = next.image !== shownProduct.image;
+        shownProduct = next;
+        loadedAt = Date.now();
+        if (pictureChanged) renderImage(next);
+        renderTexts(next, new Date());
+    } catch (err) {
+        console.warn("Could not refresh the product:", err);
+        renderTexts(shownProduct, new Date());
+    }
+}
+
+function scheduleMidnightRefresh() {
+    clearTimeout(midnightTimer);
+    // one second after midnight, so the new day is certainly there; a day is far below the longest possible timeout
+    midnightTimer = setTimeout(
+        async () => {
+            await refreshProduct();
+            scheduleMidnightRefresh();
+        },
+        msUntilNextMidnight(new Date()) + 1000
+    );
+}
+
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible" || !shownProduct) return;
+    if (isStale(loadedAt, Date.now(), REFRESH_AFTER_MS)) refreshProduct();
+    else renderTexts(shownProduct, new Date()); // the day may have changed
 });
 
 document.getElementById("retry-btn").addEventListener("click", loadProduct);

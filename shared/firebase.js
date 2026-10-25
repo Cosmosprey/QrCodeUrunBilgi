@@ -15,7 +15,8 @@ import {
     doc,
     updateDoc,
     getDoc,
-    setDoc
+    setDoc,
+    runTransaction
 } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
 /** Without a usable configuration nothing works: say so on the page (a blank page tells nobody anything), then stop. */
@@ -53,4 +54,4 @@ if (useEmulator) {
     connectFirestoreEmulator(db, window.location.hostname, 8080);
 }
 
-export { app, useEmulator, db, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc, setDoc };
+export { app, useEmulator, db, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc, setDoc, runTransaction };
