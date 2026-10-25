@@ -11,6 +11,7 @@
   "scripts": {
     "emulators": "firebase emulators:start --project demo-qr-product-info",
     "seed": "node scripts/seed-emulator.js",
+    "screenshots": "firebase emulators:exec --project demo-qr-product-info --only firestore,storage,auth,hosting \"node scripts/screenshots.js\"",
     "lint": "eslint .",
     "format": "prettier --write \"{admin,product,shared,tests,scripts,e2e}/**/*.js\" \"assets/css/{admin,product}.css\" \"*.js\"",
     "format:check": "prettier --check \"{admin,product,shared,tests,scripts,e2e}/**/*.js\" \"assets/css/{admin,product}.css\" \"*.js\"",

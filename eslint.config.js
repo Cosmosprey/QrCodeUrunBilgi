@@ -47,9 +47,9 @@ export default [
         languageOptions: { sourceType: "module", globals: globals.node }
     },
 
-    // The end-to-end tests also run code inside the page (page.evaluate)
+    // The end-to-end tests and the screenshot script also run code inside the page (page.evaluate)
     {
-        files: ["e2e/**/*.js"],
+        files: ["e2e/**/*.js", "scripts/screenshots.js"],
         languageOptions: { globals: { ...globals.node, ...globals.browser } }
     },
 
