@@ -16,6 +16,9 @@
       "tests/**",
       "e2e/**",
       "docs/**",
+      "**/*.log",
+      "test-results/**",
+      "playwright-report/**",
       "scripts/**",
       "*.config.js",
       "*.rules"

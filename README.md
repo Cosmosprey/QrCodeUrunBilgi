@@ -65,7 +65,7 @@ There is no custom server. The pages are static files; they talk to Firebase dir
 
 ### Admin panel
 
-- Add, edit and delete products; search by name; paging
+- Add, edit and delete products; search by name; paging. "Edit" brings the form into view and a **Cancel** button leads back; while a save is running no other product can be edited or deleted
 - Product image upload. Photos up to 25 MB are accepted and shrunk in the browser before upload (longest side 1200 px, WebP, EXIF rotation applied, transparency kept); small pictures and GIFs are uploaded as they are
 - QR code window: shows the product, its price and the code, downloads it as PNG and prints it (only name, price, code and address are printed)
 - Shop-wide **site address** setting for the QR codes, stored in Firestore so every device agrees
@@ -166,7 +166,7 @@ npm install
 cp shared/firebase-config.example.js shared/firebase-config.js
 ```
 
-In `shared/firebase-config.js` set `projectId` to `demo-qr-product-info` and `useEmulator` to `true` (the other values can be any text). Then:
+In `shared/firebase-config.js` set `projectId` to `demo-qr-product-info`, `apiKey` to any non-empty text such as `fake`, and `useEmulator` to `true` (the other values are not used). An empty `apiKey` or `projectId` is reported on the page. Then:
 
 ```bash
 npm run emulators      # terminal 1: Firestore, Storage, Auth and a web server on http://localhost:5000
@@ -176,6 +176,8 @@ npm run seed           # terminal 2: creates the development admin
 Open <http://localhost:5000/admin/admin.html> and sign in with username `admin` and password `admin123`. Add a product, press its QR button, and open the address shown under the code to see the customer page. Emulator data is kept in memory and is lost when the emulators stop (run `npm run seed` again after a restart).
 
 To scan the code with a phone, put the phone on the same network and enter your computer's network address in the QR window (see [QR site address](#qr-site-address-local-network-and-phones)).
+
+> **Use this on a network you trust.** For the phone to reach them, the emulators listen on all network interfaces (`firebase.json`), and the development admin has a well-known password. Anyone on the same network can sign in as `admin` or read and change the emulator data. Only made-up data is at risk, but do not leave the emulators running on a public Wi-Fi.
 
 ---
 
@@ -201,6 +203,12 @@ Only one admin account may change data. Everyone else can only open a single pro
 4. Publish the rules: paste each file into the Rules tab of Firestore and Storage in the console, or run `npx firebase deploy --only firestore:rules,storage --project YOUR_PROJECT_ID` (requires `npm install` and `npx firebase login`).
 
 Until step 3 is done, nobody is an admin and every write is denied. This is deliberate: Firebase assigns random UIDs, so nobody can sign up as `dev-admin-uid` on a real project.
+
+Three more things to know about a real project:
+
+- **Turn off sign-up.** The web API key is public, so unless you disable creating accounts (Firebase Console → Authentication → Settings → User actions → uncheck *Enable create (sign-up)*), anyone can create accounts through Firebase's REST API. Those accounts cannot change anything, because the rules only trust the admin's UID, but they use up your quota and could take the username you wanted. Create the admin user first, then turn sign-up off.
+- **The sign-in is remembered.** Firebase keeps the admin signed in on that browser until **Sign out** is pressed, so use the button on a shared computer.
+- **Cloud Storage needs the Blaze plan for new projects.** Firebase now asks for the pay-as-you-go (Blaze) plan to create the default storage bucket of a new project; the free usage quota still applies, so a small project normally costs nothing, but a billing account is required (see [Firebase's FAQ](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024)). Check the current terms before you start.
 
 ### Data model
 
@@ -232,7 +240,7 @@ npm run lint           # ESLint
 npm run format:check   # Prettier (npm run format fixes the files)
 ```
 
-- **Unit tests** (`tests/`, `node:test`): the pure logic (dates in four time zones, stock, discount, prices, QR addresses, image sizes, the translation dictionaries) and the **security rules**, which are tested against the Firestore and Storage emulators: who may read, write and upload what, and which invalid data is rejected.
+- **Unit tests** (`tests/`, `node:test`): the pure logic (dates in six time zones (two of them with daylight saving time), stock, discount, prices, QR addresses, image sizes, the translation dictionaries) and the **security rules**, which are tested against the Firestore and Storage emulators: who may read, write and upload what, and which invalid data is rejected.
 - **Browser tests** (`e2e/`, [Playwright](https://playwright.dev)): they open the admin panel and the customer page in Chromium and use them like a person would: signing in, adding / editing / deleting products, the QR window and its keyboard behaviour, the discount texts, the language switch, photo shrinking, and an automatic accessibility scan (axe-core) of every screen in both languages. Every test also fails on uncaught page errors and Content Security Policy violations. The first time, install the browser with `npx playwright install chromium`. The tests only ever talk to the emulators: they stop if `shared/firebase-config.js` points at a real project.
 - **ESLint** finds mistakes (unused variables, `==`, ...) and enforces the project's security rule: HTML strings are never assigned (`innerHTML`, `insertAdjacentHTML`, ...). **Prettier** formats the JavaScript and the two page stylesheets.
 - **[GitHub Actions](.github/workflows/ci.yml)** runs lint, the format check, `npm test` and the browser tests on every pull request and every push to `main`. Dependabot proposes updates of the Actions once a month.
@@ -250,10 +258,10 @@ starts the emulators, fills them with a few made-up products (their pictures are
 ## Security
 
 - **Access control is enforced by Firebase, not by the pages.** The admin panel requires a login, and the Firestore and Storage rules (`firestore.rules`, `storage.rules`) only let the admin account change data.
-- **The rules validate the data**, not only the form: exact field set, types, sizes, date formats and `http(s)` image URLs. Only the admin may upload images; the stored file must be JPEG, PNG, WebP or GIF and at most 2 MB (SVG is rejected on purpose, it can carry scripts). The admin panel shrinks big photos before uploading, so a phone photo of several megabytes becomes a few hundred KB and fits easily.
+- **The rules validate the data**, not only the form: exact field set, types, sizes, the shape of dates (`YYYY-MM-DD`, month 01-12, day 01-31) and that an image address starts with `http(s)://`. They check the shape, not the meaning: they cannot tell that 31 February does not exist, or whose server an image address points to (only the admin writes them, and the admin form produces real dates and storage addresses). Only the admin may upload images; the stored file must be JPEG, PNG, WebP or GIF and at most 2 MB (SVG is rejected on purpose, it can carry scripts). The admin panel shrinks big photos before uploading, so a phone photo of several megabytes becomes a few hundred KB and fits easily.
 - **Anyone may read a single product** (that is what the QR code opens), but only the admin may list, create, change or delete products. `settings/site` can be read and written by the admin only.
 - **No HTML injection:** the pages never put product data into `innerHTML`; it is always inserted as plain text, and ESLint fails the build if code assigns HTML strings.
-- **Content Security Policy:** both pages only allow scripts from their own files and `www.gstatic.com` (the Firebase SDK). There are no inline scripts or inline event handlers, and the libraries (Bootstrap, Bootstrap Icons, the QR library) are included in the repository instead of being loaded from a CDN.
+- **Content Security Policy:** both pages only allow scripts from their own files and `www.gstatic.com` (the Firebase SDK). There are no inline scripts or inline event handlers, and the libraries (Bootstrap, Bootstrap Icons, the QR library) are included in the repository instead of being loaded from a CDN. The policy is a `<meta>` tag, which cannot restrict everything (for example who may put the pages in a frame); if you ever host the pages, send a stricter Content Security Policy as an HTTP header (`default-src 'self'`, the Firebase hosts, `frame-ancestors 'none'`).
 - **Configuration:** Firebase credentials are not in the repository. The Firebase web configuration (API key and project id) is not a secret by itself, because every visitor can see it. What protects the data is the login and the rules, so publish the rules before exposing the project to a network you do not control.
 
 ---
