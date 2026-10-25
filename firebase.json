@@ -14,7 +14,9 @@
       "package*.json",
       "CLAUDE.md",
       "tests/**",
+      "e2e/**",
       "scripts/**",
+      "*.config.js",
       "*.rules"
     ]
   },
