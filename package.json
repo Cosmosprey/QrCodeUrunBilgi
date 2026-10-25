@@ -11,12 +11,23 @@
   "scripts": {
     "emulators": "firebase emulators:start --project demo-qr-product-info",
     "seed": "node scripts/seed-emulator.js",
+    "lint": "eslint .",
+    "format": "prettier --write \"{admin,product,shared,tests,scripts,e2e}/**/*.js\" \"assets/css/{admin,product}.css\" \"*.js\"",
+    "format:check": "prettier --check \"{admin,product,shared,tests,scripts,e2e}/**/*.js\" \"assets/css/{admin,product}.css\" \"*.js\"",
     "test": "firebase emulators:exec --project demo-qr-product-info --only firestore,storage \"node --test tests/*.test.js\"",
-    "test:unit": "node --test tests/helpers.test.js tests/product-logic.test.js tests/list-logic.test.js tests/sdk-version.test.js tests/qr-logic.test.js tests/image-logic.test.js tests/image-convert.test.js tests/i18n-core.test.js tests/i18n.test.js"
+    "test:unit": "node --test tests/helpers.test.js tests/product-logic.test.js tests/list-logic.test.js tests/sdk-version.test.js tests/qr-logic.test.js tests/image-logic.test.js tests/image-convert.test.js tests/i18n-core.test.js tests/i18n.test.js",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^10.0.1",
     "@firebase/rules-unit-testing": "6.0.0",
+    "@playwright/test": "^1.63.0",
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
     "firebase": "13.1.0",
-    "firebase-tools": "^15.34.1"
+    "firebase-tools": "^15.34.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10"
   }
 }
