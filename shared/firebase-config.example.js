@@ -14,5 +14,6 @@ export const firebaseConfig = {
 
 // Set to true to talk to the local Firebase Emulator Suite (`npm run emulators`)
 // instead of a real Firebase project. No real project is needed in that mode:
-// use projectId "demo-qr-product-info" and leave the other values as dummy strings.
+// use projectId "demo-qr-product-info" and any non-empty text for apiKey, for example "fake" (an empty apiKey
+// stops the admin panel from starting). The other values are not used by the emulators.
 export const useEmulator = false;
