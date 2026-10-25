@@ -12,7 +12,7 @@ The project allows an administrator to manage products through a web-based admin
 
 The main goal of the project is to provide quick access to dynamic product information while keeping the system simple, modular, and easy to use.
 
-> **Note on Language:** While this repository and documentation are written in English, the application's user interface (UI)—including labels, buttons, stock status indicators, and date categories (SKT / TETT)—is fully presented in **Turkish** to align with its intended local market design.
+> **Note on Language:** The repository and documentation are written in English. The application's user interface is available in **Turkish and English**: a TR / EN switch sits on the login screen, in the admin panel and on the customer page. The first visit follows the browser language (Turkish for Turkish browsers, English for any other), and the choice is remembered in the browser. Prices and dates follow the language (`39,90 ₺` / `₺39.90`), while the SKT / TETT terms and the product data stay as they were entered.
 ---
 
 ## Features
@@ -176,7 +176,7 @@ The project is separated into two main user-facing areas:
 * `admin/` — Product management interface. `admin_script.js` only wires small modules together: `auth-ui.js` (login), `product-list.js` (cards, search, paging, delete), `product-form.js` (add / edit), `qr-modal.js` (QR window: address, download, print), `site-settings.js` (the saved site address), plus helpers for image upload and the pure list and QR logic.
 * `product/` — Customer-facing product page
 
-* `shared/` — Code used by both areas (Firebase initialisation and configuration, safe DOM helpers, the pure date / stock / discount logic and the store settings)
+* `shared/` — Code used by both areas (Firebase initialisation and configuration, safe DOM helpers, the pure date / stock / discount logic, the store settings, and the language support: `i18n.js`, `i18n-core.js` and the two dictionaries in `locales/`)
 
 Shared frontend resources are stored under `assets/`: one stylesheet per page (`css/admin.css`, `css/product.css`) next to Bootstrap and Bootstrap Icons, and the QR library under `js/vendor/`.
 

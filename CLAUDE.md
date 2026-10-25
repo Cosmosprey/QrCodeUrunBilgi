@@ -18,7 +18,7 @@ Hobby / portfolio project, meant to be downloaded and run on a local network by 
 
 ## Languages
 
-- User interface: **Turkish** (English is planned).
+- User interface: **Turkish and English**, chosen by the user with a TR/EN switch (see "Translations" below).
 - Code, comments, commit messages, README, this file: **English**.
 - The project owner chats in Turkish, so conversation with them is in Turkish.
 
@@ -38,7 +38,8 @@ admin/      admin panel: admin_script.js only wires modules (auth-ui, product-li
             upload/username helpers, list-logic, qr-logic and image-logic (pure), qr.js (wrapper)
 product/    customer-facing product page
 shared/     code used by both pages (Firebase app + Firestore init, config, safe DOM helpers,
-            product-logic.js = pure date/stock/discount/price logic, store-config.js = discount and stock settings)
+            product-logic.js = pure date/stock/discount/price logic, store-config.js = discount and stock settings,
+            i18n.js / i18n-core.js / i18n-init.js + locales/tr.js, en.js = the TR/EN texts)
 assets/     vendored CSS/JS (Bootstrap, Bootstrap Icons, js/vendor/easyqrcodejs.js) and the page stylesheets
             css/admin.css and css/product.css (each page loads only its own)
 tests/      node:test suites (security rules via the emulators, pure helpers)
@@ -56,6 +57,15 @@ Accessibility conventions (a scan with axe-core found 0 problems on every screen
 - Dialogs: `role="dialog"`, `aria-modal`, a name from their title; focus moves in, Tab stays inside, Escape or a click outside closes, the page behind is `inert`, focus returns to the opener (see `admin/qr-modal.js`).
 - Text needs 4.5:1 contrast. The Bootstrap blue and red are too dark/light on this theme, so the admin prices and the customer warning use lighter/darker shades (see the comments in `admin.css` and `product.css`).
 - Success messages are toasts (`admin/toast.js`, a polite live region); problems stay in the alert box next to what failed.
+
+Translations: every visible text lives in `shared/locales/tr.js` and `en.js` (flat dictionaries, same keys; `{name}` marks a filled-in value, `key.one` is the singular form). Never write a user-visible string in the code:
+
+- Static text in the HTML: `data-i18n="key"` (also `data-i18n-placeholder|aria-label|title|alt`). The Turkish text stays in the HTML as a fallback.
+- Text built in JS: `t("key", params)`; text with a badge or bold part: `tParts` (returns strings and DOM nodes, so nothing goes through `innerHTML`). Redraw what you built yourself with `onLanguageChange(callback)`.
+- Pure helpers return translation keys (for example `validateExpiryDate` returns `"error.date.pastSkt"`), never sentences; the caller calls `t()`.
+- Prices and dates are formatted per language (`formatPrice`, `formatDate`). Stored values stay Turkish (the category names); `categoryKey()` maps them to labels.
+- `tests/i18n.test.js` fails when the dictionaries differ, an English text contains Turkish letters, a used key is missing, or a key is never used.
+- The language is saved in `localStorage` (guarded; it can be unavailable) and `shared/i18n-init.js` applies it before the page is shown (`i18n-pending` class).
 
 The Firebase SDK is loaded from Google's CDN at a fixed version (the `gstatic.com/firebasejs/<version>/` URLs in `shared/firebase.js` and `admin/firebase-admin.js`). That version must equal the `firebase` dev dependency in `package.json`; `tests/sdk-version.test.js` fails when they drift apart, so update them together. The project is on Firebase 13.x. Its test helper `@firebase/rules-unit-testing` 6 declares Node 24.12 or newer, so `engines` says `>=24.12.0` (the web pages themselves need no Node).
 
@@ -96,9 +106,9 @@ Work proceeds phase by phase, one commit series per phase. Before each phase, de
 - [x] **Phase 4a - Usability:** responsive admin (phones/tablets), long names and missing images on the customer page, QR site-address setting (Firestore `settings/site`), QR PNG download and print.
 - [x] **Phase 4b-1 - Accessibility and feedback:** labels and names, landmarks and headings, keyboard-operable QR dialog, contrast, toasts, loading/empty states.
 - [x] **Phase 4b-2 - Images:** photos are shrunk in the browser before upload (1200 px, WebP; small pictures and GIFs untouched; EXIF rotation applied; transparency kept).
-- [ ] **Phase 4b-3 - Languages:** TR/EN (shared/i18n.js, two dictionaries, language switch, translated validation messages as codes, English price/date formats).
+- [x] **Phase 4b-3 - Languages:** TR/EN (shared/i18n.js, two dictionaries, language switch, translated validation messages as codes, English price/date formats).
 - [ ] **Phase 5 - Quality:** ESLint/Prettier, rules tests against the emulator, README and screenshots.
 
 ## Known issues being worked on
 
-See the roadmap above. The most important ones now: the interface is Turkish only (phase 4b-3).
+See the roadmap above. Nothing urgent is known; phase 5 (quality: lint/format, browser tests, README screenshots) is next.
