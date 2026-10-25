@@ -1,7 +1,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { usernameToEmail, AUTH_EMAIL_DOMAIN } from "../admin/username.js";
-import { validateImageFile, storagePathFor, MAX_IMAGE_BYTES, MAX_INPUT_BYTES } from "../admin/upload.js";
+import { validateImageFile, storagePathFor, randomFileId, MAX_IMAGE_BYTES, MAX_INPUT_BYTES } from "../admin/upload.js";
 import { safeHttpUrl } from "../shared/dom.js";
 
 describe("usernameToEmail", () => {
@@ -85,5 +85,23 @@ describe("safeHttpUrl", () => {
         ]) {
             assert.equal(safeHttpUrl(bad), "", String(bad));
         }
+    });
+});
+
+describe("randomFileId", () => {
+    test("is 32 hexadecimal characters and different every time", () => {
+        const ids = new Set(Array.from({ length: 50 }, () => randomFileId()));
+        assert.equal(ids.size, 50);
+        for (const id of ids) assert.match(id, /^[0-9a-f]{32}$/);
+    });
+
+    test("needs only getRandomValues: randomUUID does not exist on plain http addresses", () => {
+        const insecure = { getRandomValues: (array) => array.fill(171) }; // no randomUUID, like on http://192.168.1.20
+        assert.equal(randomFileId(insecure), "ab".repeat(16));
+    });
+
+    test("the id makes a safe storage path", () => {
+        const path = storagePathFor({ type: "image/webp" }, randomFileId());
+        assert.match(path, /^products\/[0-9a-f]{32}\.webp$/);
     });
 });

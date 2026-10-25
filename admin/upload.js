@@ -32,6 +32,16 @@ export function validateImageFile(file) {
 }
 
 /** Storage path for an upload. The user's file name is never used. */
+/**
+ * A random id (32 hexadecimal characters) for the name of an uploaded file. It uses getRandomValues, not randomUUID:
+ * randomUUID only exists on secure origins (https or localhost), but the panel is also used from a phone at an address
+ * such as http://192.168.1.20:5000, where uploading must work too.
+ */
+export function randomFileId(cryptoApi = globalThis.crypto) {
+    const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 export function storagePathFor(file, id) {
     return `products/${id}.${ALLOWED_IMAGE_TYPES[file.type]}`;
 }

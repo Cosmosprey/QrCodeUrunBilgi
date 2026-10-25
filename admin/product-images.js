@@ -2,11 +2,11 @@
 
 import { storage, ref, uploadBytes, getDownloadURL, deleteObject } from "./firebase-admin.js";
 import { safeHttpUrl } from "../shared/dom.js";
-import { storagePathFor } from "./upload.js";
+import { storagePathFor, randomFileId } from "./upload.js";
 
 /** Uploads an image under a random name and returns its download URL. */
 export async function uploadProductImage(file) {
-    const fileRef = ref(storage, storagePathFor(file, crypto.randomUUID()));
+    const fileRef = ref(storage, storagePathFor(file, randomFileId()));
 
     await uploadBytes(fileRef, file, { contentType: file.type });
 
