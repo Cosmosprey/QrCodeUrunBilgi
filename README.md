@@ -296,6 +296,7 @@ firestore.rules, storage.rules   Security rules
 This is a hobby and portfolio project, meant to be downloaded and run on a local network with your own Firebase project. It is not deployed anywhere.
 
 - It supports a single admin account.
+- Prices are in Turkish lira (₺) in both languages: the language changes how a price is written (`39,90 ₺` / `₺39.90`), not the currency.
 - The discount is a demonstration: there is no checkout, payment or coupon validation.
 - The tests and the CI run against the Firebase emulators and in Chromium. The project has not been verified in this repository against a real Firebase project, or in Firefox or Safari.
 
