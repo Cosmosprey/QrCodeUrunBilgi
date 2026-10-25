@@ -1,5 +1,7 @@
 // Pure logic for QR codes: which address goes into the code and how its file is named. No DOM.
 
+const PAGE_PATHS = /\/(?:admin\/admin|product\/product)\.html$/;
+
 /**
  * Checks and tidies the site address typed by the admin.
  * Returns { url } (no trailing slash) or { error } with the translation key of a message.
@@ -24,7 +26,10 @@ export function normalizeSiteUrl(input) {
         return { error: "error.site.queryOrHash" };
     }
 
-    return { url: `${url.origin}${url.pathname}`.replace(/\/+$/, "") };
+    // The address of the site, not of one of its pages: someone who pastes the address of the admin page gets the
+    // address of the folder it is in
+    const path = url.pathname.replace(PAGE_PATHS, "");
+    return { url: `${url.origin}${path}`.replace(/\/+$/, "") };
 }
 
 /** True for addresses only the computer itself can reach (localhost, 127.x.x.x, ::1, 0.0.0.0). */

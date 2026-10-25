@@ -23,7 +23,7 @@ const saveButton = document.getElementById("qrSiteSave");
 
 let currentProduct = null;
 let opener = null; // the element that had focus before the window opened
-let siteUrl = null; // the saved address; null until loaded, "" when none is saved
+let siteUrl = null; // the saved address; null until loaded (or when loading failed), "" when none is saved
 
 /** The address in use: the saved one, otherwise the address this page was opened from. */
 function effectiveSiteUrl() {
@@ -45,7 +45,7 @@ function render() {
 function renderTexts() {
     title.textContent = currentProduct.name || t("qr.title");
     price.textContent = formatPrice(currentProduct.price, getLanguage());
-    showMessage(warning, isLocalAddress(effectiveSiteUrl()) ? t("qr.localWarning") : "");
+    showMessage(warning, isLocalAddress(effectiveSiteUrl()) ? "qr.localWarning" : "");
 }
 
 async function saveAddress() {
@@ -53,7 +53,7 @@ async function saveAddress() {
     const result = normalizeSiteUrl(siteInput.value);
     if (result.error) {
         siteMessage.className = "small mt-1 text-danger";
-        showMessage(siteMessage, t(result.error));
+        showMessage(siteMessage, result.error);
         return;
     }
 
@@ -63,11 +63,11 @@ async function saveAddress() {
         siteUrl = result.url;
         render();
         siteMessage.className = "small mt-1 text-success";
-        showMessage(siteMessage, t("qr.saved"));
+        showMessage(siteMessage, "qr.saved");
     } catch (err) {
         console.error("Site adresi kaydedilemedi:", err);
         siteMessage.className = "small mt-1 text-danger";
-        showMessage(siteMessage, t("qr.saveFailed"));
+        showMessage(siteMessage, "qr.saveFailed");
     } finally {
         saveButton.disabled = false;
     }
@@ -138,8 +138,7 @@ export function initQrModal() {
         if (e.key === "Enter") saveAddress();
     });
     onLanguageChange(() => {
-        // Only once the address has loaded: render() runs then and fills the texts in.
-        if (isOpen() && currentProduct && siteUrl !== null) renderTexts();
+        if (isOpen() && currentProduct) renderTexts();
     });
 }
 
@@ -152,7 +151,8 @@ export async function showQr(product) {
     openDialog();
 
     if (siteUrl === null) {
-        siteUrl = (await loadSiteUrl()) ?? "";
+        // null again when the address could not be read: it is then tried again the next time
+        siteUrl = await loadSiteUrl();
     }
     render();
 }
