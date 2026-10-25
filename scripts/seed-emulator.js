@@ -12,14 +12,11 @@ const USERNAME = "admin";
 const EMAIL = `${USERNAME}@qr-admin.local`; // keep in sync with admin/username.js
 const PASSWORD = "admin123";
 
-const response = await fetch(
-    `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/projects/${PROJECT_ID}/accounts`,
-    {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer owner" },
-        body: JSON.stringify({ localId: ADMIN_UID, email: EMAIL, password: PASSWORD, emailVerified: true })
-    }
-);
+const response = await fetch(`http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/projects/${PROJECT_ID}/accounts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer owner" },
+    body: JSON.stringify({ localId: ADMIN_UID, email: EMAIL, password: PASSWORD, emailVerified: true })
+});
 
 const body = await response.json();
 

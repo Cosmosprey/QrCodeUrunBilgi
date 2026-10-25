@@ -1,7 +1,14 @@
 import { db, doc, getDoc } from "../shared/firebase.js";
 import { el, safeHttpUrl } from "../shared/dom.js";
 import { storeConfig } from "../shared/store-config.js";
-import { expiryStatus, stockStatus, discountFor, formatPrice, formatDate, categoryKey } from "../shared/product-logic.js";
+import {
+    expiryStatus,
+    stockStatus,
+    discountFor,
+    formatPrice,
+    formatDate,
+    categoryKey
+} from "../shared/product-logic.js";
 import { t, tParts, getLanguage, onLanguageChange } from "../shared/i18n.js";
 
 const params = new URLSearchParams(window.location.search);
@@ -41,10 +48,14 @@ function renderStock(stockEl, stockCount) {
 
 function expiryText(status) {
     switch (status.state) {
-        case "upcoming": return t("product.expiry.days", { count: status.daysLeft });
-        case "today": return t("product.expiry.today");
-        case "expired": return t("product.expiry.expired");
-        default: return "";
+        case "upcoming":
+            return t("product.expiry.days", { count: status.daysLeft });
+        case "today":
+            return t("product.expiry.today");
+        case "expired":
+            return t("product.expiry.expired");
+        default:
+            return "";
     }
 }
 
@@ -60,14 +71,20 @@ function renderDateBox(boxEl, p, status) {
         attrs: { style: "font-size: 0.7rem; letter-spacing: 0.5px;" }
     });
 
-    const isWarning = status.state === "expired" || status.state === "today" ||
+    const isWarning =
+        status.state === "expired" ||
+        status.state === "today" ||
         (status.state === "upcoming" && status.daysLeft <= storeConfig.expiryWarningDays);
 
     const lines = [
-        el("div", {
-            className: "text-muted small text-uppercase fw-bold",
-            attrs: { style: "font-size: 0.7rem;" }
-        }, [`${dateLabel} `, typeBadge]),
+        el(
+            "div",
+            {
+                className: "text-muted small text-uppercase fw-bold",
+                attrs: { style: "font-size: 0.7rem;" }
+            },
+            [`${dateLabel} `, typeBadge]
+        ),
         el("div", {
             className: "text-dark mt-1",
             text: formatDate(p.lastUseDate, getLanguage()) ?? t("product.notSpecified"),
@@ -76,10 +93,12 @@ function renderDateBox(boxEl, p, status) {
     ];
 
     if (status.state !== "none") {
-        lines.push(el("div", { className: `small mt-1 ${isWarning ? "text-danger fw-bold" : "text-secondary"}` }, [
-            el("i", { className: `bi ${isWarning ? "bi-exclamation-circle" : "bi-clock-history"}` }),
-            ` ${expiryText(status)}`
-        ]));
+        lines.push(
+            el("div", { className: `small mt-1 ${isWarning ? "text-danger fw-bold" : "text-secondary"}` }, [
+                el("i", { className: `bi ${isWarning ? "bi-exclamation-circle" : "bi-clock-history"}` }),
+                ` ${expiryText(status)}`
+            ])
+        );
     }
 
     boxEl.replaceChildren(
@@ -88,7 +107,11 @@ function renderDateBox(boxEl, p, status) {
 }
 
 function buildCoupon(discount) {
-    const code = el("span", { className: "badge bg-success", text: discount.couponCode, attrs: { style: "font-size: 1rem;" } });
+    const code = el("span", {
+        className: "badge bg-success",
+        text: discount.couponCode,
+        attrs: { style: "font-size: 1rem;" }
+    });
     const percent = el("strong", { text: t("product.coupon.discount", { percent: discount.ratePercent }) });
 
     return el("div", { className: "alert alert-success mt-3 shadow-sm animate-bounce", attrs: { id: "coupon" } }, [
@@ -97,8 +120,14 @@ function buildCoupon(discount) {
             el("div", {}, [
                 el("strong", { className: "text-dark", text: t("product.coupon.title") }),
                 el("br"),
-                el("small", { className: "text-dark" },
-                    tParts(discount.dateType === "TETT" ? "product.coupon.tett" : "product.coupon.skt", { code, discount: percent })),
+                el(
+                    "small",
+                    { className: "text-dark" },
+                    tParts(discount.dateType === "TETT" ? "product.coupon.tett" : "product.coupon.skt", {
+                        code,
+                        discount: percent
+                    })
+                ),
                 el("br"),
                 el("small", { className: "text-muted", text: t("product.coupon.demo") })
             ])
@@ -108,13 +137,17 @@ function buildCoupon(discount) {
 
 // Fiyat, son güncelleme tarihi ve (uygunsa) indirim kuponu
 function renderPrice(priceEl, p, now) {
-    const updateNote = el("div", {
-        className: "text-muted mt-1",
-        attrs: { style: "font-size: 0.8rem; font-weight: normal;" }
-    }, [
-        el("i", { className: "bi bi-clock-history" }),
-        ` ${t("product.priceUpdated", { date: formatDate(p.priceLastUpdate, getLanguage()) ?? t("product.notSpecified") })}`
-    ]);
+    const updateNote = el(
+        "div",
+        {
+            className: "text-muted mt-1",
+            attrs: { style: "font-size: 0.8rem; font-weight: normal;" }
+        },
+        [
+            el("i", { className: "bi bi-clock-history" }),
+            ` ${t("product.priceUpdated", { date: formatDate(p.priceLastUpdate, getLanguage()) ?? t("product.notSpecified") })}`
+        ]
+    );
 
     document.getElementById("coupon")?.remove();
     const discount = discountFor(p, now);
@@ -125,7 +158,10 @@ function renderPrice(priceEl, p, now) {
     }
 
     priceEl.replaceChildren(
-        el("span", { className: "text-muted text-decoration-line-through fs-5 me-2", text: formatPrice(discount.originalPrice, getLanguage()) }),
+        el("span", {
+            className: "text-muted text-decoration-line-through fs-5 me-2",
+            text: formatPrice(discount.originalPrice, getLanguage())
+        }),
         el("span", { className: "text-success", text: formatPrice(discount.finalPrice, getLanguage()) }),
         updateNote
     );

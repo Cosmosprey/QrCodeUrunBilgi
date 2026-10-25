@@ -73,7 +73,16 @@ describe("safeHttpUrl", () => {
     });
 
     test("drops everything else", () => {
-        for (const bad of ["javascript:alert(1)", "data:text/html,<b>x</b>", "ftp://x.com/a", "not a url", "", null, undefined, 42]) {
+        for (const bad of [
+            "javascript:alert(1)",
+            "data:text/html,<b>x</b>",
+            "ftp://x.com/a",
+            "not a url",
+            "",
+            null,
+            undefined,
+            42
+        ]) {
             assert.equal(safeHttpUrl(bad), "", String(bad));
         }
     });

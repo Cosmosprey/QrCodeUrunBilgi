@@ -14,8 +14,10 @@ describe("detectLanguage", () => {
     });
 
     test("Turkish browsers get Turkish, everything else English", () => {
-        for (const turkish of ["tr", "tr-TR", "TR-tr"]) assert.equal(detectLanguage({ browserLanguages: [turkish] }), "tr", turkish);
-        for (const other of ["en-US", "en-GB", "de-DE", "az", "ar"]) assert.equal(detectLanguage({ browserLanguages: [other] }), "en", other);
+        for (const turkish of ["tr", "tr-TR", "TR-tr"])
+            assert.equal(detectLanguage({ browserLanguages: [turkish] }), "tr", turkish);
+        for (const other of ["en-US", "en-GB", "de-DE", "az", "ar"])
+            assert.equal(detectLanguage({ browserLanguages: [other] }), "en", other);
     });
 
     test("the browser's first preference decides", () => {
@@ -54,7 +56,7 @@ describe("interpolate", () => {
 });
 
 describe("translate", () => {
-    const dictionary = { hello: "Hello {name}", "days": "{count} days left", "days.one": "{count} day left" };
+    const dictionary = { hello: "Hello {name}", days: "{count} days left", "days.one": "{count} day left" };
 
     test("looks up and fills in", () => {
         assert.equal(translate(dictionary, "hello", { name: "Ada" }), "Hello Ada");
@@ -83,7 +85,13 @@ describe("translateParts", () => {
     test("splits around placeholders and keeps node-like parameters as they are", () => {
         const code = { tag: "span" };
         const discount = { tag: "strong" };
-        assert.deepEqual(translateParts(dictionary, "coupon", { code, discount }), ["Use ", code, " to get ", discount, " off!"]);
+        assert.deepEqual(translateParts(dictionary, "coupon", { code, discount }), [
+            "Use ",
+            code,
+            " to get ",
+            discount,
+            " off!"
+        ]);
     });
 
     test("the order of placeholders follows the language, not the code", () => {

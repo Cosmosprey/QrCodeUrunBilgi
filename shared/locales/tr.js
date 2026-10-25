@@ -78,7 +78,8 @@ export const tr = {
     "error.image.tooLarge": "Görsel en fazla 25 MB olabilir.",
     "error.date.invalid": "Geçerli bir tarih girin.",
     "error.date.pastSkt": "Son kullanma tarihi geçmiş bir ürün eklenemez.",
-    "error.site.invalid": "Geçerli bir adres girin. Adres http:// veya https:// ile başlamalıdır (örn. http://192.168.1.20:5000).",
+    "error.site.invalid":
+        "Geçerli bir adres girin. Adres http:// veya https:// ile başlamalıdır (örn. http://192.168.1.20:5000).",
     "error.site.scheme": "Adres http:// veya https:// ile başlamalıdır.",
     "error.site.credentials": "Adres kullanıcı adı veya parola içeremez.",
     "error.site.queryOrHash": "Adres ? veya # içeremez.",
@@ -90,7 +91,8 @@ export const tr = {
     "qr.download": "PNG indir",
     "qr.print": "Yazdır",
     "qr.close": "Kapat",
-    "qr.localWarning": "Bu adres yalnızca bu bilgisayarda çalışır: telefonlar ve diğer cihazlar \"localhost\" adresine ulaşamaz, QR kodu okutulduğunda sayfa açılmaz. Bilgisayarın ağ adresini yazıp Kaydet'e basın (örn. http://192.168.1.20:5000).",
+    "qr.localWarning":
+        'Bu adres yalnızca bu bilgisayarda çalışır: telefonlar ve diğer cihazlar "localhost" adresine ulaşamaz, QR kodu okutulduğunda sayfa açılmaz. Bilgisayarın ağ adresini yazıp Kaydet\'e basın (örn. http://192.168.1.20:5000).',
     "qr.saved": "Adres kaydedildi.",
     "qr.saveFailed": "Adres kaydedilemedi. Lütfen tekrar deneyin.",
 
@@ -117,7 +119,8 @@ export const tr = {
     "product.expiry.expired": "Tarihi Geçti",
     "product.coupon.title": "Sürdürülebilirlik Fırsatı!",
     "product.coupon.skt": "Ürünün SKT'si yaklaştığı için kasada {code} koduyla {discount} kazanın!",
-    "product.coupon.tett": "Ürünün tavsiye edilen tüketim tarihi geçtiği için kasada {code} koduyla {discount} kazanın!",
+    "product.coupon.tett":
+        "Ürünün tavsiye edilen tüketim tarihi geçtiği için kasada {code} koduyla {discount} kazanın!",
     "product.coupon.discount": "%{percent} indirim",
     "product.coupon.demo": "Demo özelliği: gerçek bir ödeme akışı yoktur."
 };

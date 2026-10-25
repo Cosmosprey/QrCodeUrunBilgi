@@ -31,7 +31,10 @@ describe("the two dictionaries", () => {
     });
 
     test("have no empty texts", () => {
-        for (const [name, dictionary] of [["tr", tr], ["en", en]]) {
+        for (const [name, dictionary] of [
+            ["tr", tr],
+            ["en", en]
+        ]) {
             for (const [key, text] of Object.entries(dictionary)) assert.ok(text.trim().length > 0, `${name}: ${key}`);
         }
     });
@@ -46,7 +49,10 @@ describe("the two dictionaries", () => {
 
 // ---- every key used in the code exists, and every key in the dictionary is used somewhere
 const SOURCE_FILES = ["admin", "product", "shared"].flatMap((dir) =>
-    readdirSync(dir).filter((name) => name.endsWith(".js") || name.endsWith(".html")).map((name) => join(dir, name)));
+    readdirSync(dir)
+        .filter((name) => name.endsWith(".js") || name.endsWith(".html"))
+        .map((name) => join(dir, name))
+);
 const source = (file) => readFileSync(file, "utf8");
 const KEY_SHAPE = /^[a-z][A-Za-z0-9]*(\.[A-Za-z0-9]+)+$/;
 

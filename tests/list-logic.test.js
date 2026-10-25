@@ -24,8 +24,8 @@ describe("filterProductsByName", () => {
     });
 
     test("handles the Turkish dotted and dotless i", () => {
-        assert.deepEqual(ids("içecek"), ["2"]);   // lower-case i finds İ
-        assert.deepEqual(ids("ısparta"), ["4"]);  // lower-case ı finds I
+        assert.deepEqual(ids("içecek"), ["2"]); // lower-case i finds İ
+        assert.deepEqual(ids("ısparta"), ["4"]); // lower-case ı finds I
     });
 
     test("products without a name never match a non-empty search and never crash", () => {

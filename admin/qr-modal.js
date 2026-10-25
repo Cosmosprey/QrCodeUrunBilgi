@@ -104,8 +104,9 @@ function closeQr() {
 
 /** Keeps Tab and Shift+Tab inside the dialog. */
 function keepFocusInside(event) {
-    const focusable = [...dialog.querySelectorAll("button:not(:disabled), input:not(:disabled)")]
-        .filter((element) => element.offsetParent !== null);
+    const focusable = [...dialog.querySelectorAll("button:not(:disabled), input:not(:disabled)")].filter(
+        (element) => element.offsetParent !== null
+    );
     if (focusable.length === 0) return;
 
     const first = focusable[0];
