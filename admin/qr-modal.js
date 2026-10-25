@@ -7,6 +7,7 @@ import { loadSiteUrl, saveSiteUrl } from "./site-settings.js";
 import { normalizeSiteUrl, isLocalAddress, qrTargetUrl, qrFileName } from "./qr-logic.js";
 import { formatPrice } from "../shared/product-logic.js";
 import { showMessage } from "./ui.js";
+import { t, getLanguage, onLanguageChange } from "../shared/i18n.js";
 
 const modal = document.getElementById("qrModal");
 const dialog = modal.querySelector(".qr-modal-box");
@@ -37,9 +38,14 @@ function render() {
     linkText.textContent = url;
     siteInput.value = base;
 
-    showMessage(warning, isLocalAddress(base)
-        ? "Bu adres yalnızca bu bilgisayarda çalışır: telefonlar ve diğer cihazlar \"localhost\" adresine ulaşamaz, QR kodu okutulduğunda sayfa açılmaz. Bilgisayarın ağ adresini yazıp Kaydet'e basın (örn. http://192.168.1.20:5000)."
-        : "");
+    renderTexts();
+}
+
+/** The parts of the window that depend on the language (the QR code itself does not). */
+function renderTexts() {
+    title.textContent = currentProduct.name || t("qr.title");
+    price.textContent = formatPrice(currentProduct.price, getLanguage());
+    showMessage(warning, isLocalAddress(effectiveSiteUrl()) ? t("qr.localWarning") : "");
 }
 
 async function saveAddress() {
@@ -47,7 +53,7 @@ async function saveAddress() {
     const result = normalizeSiteUrl(siteInput.value);
     if (result.error) {
         siteMessage.className = "small mt-1 text-danger";
-        showMessage(siteMessage, result.error);
+        showMessage(siteMessage, t(result.error));
         return;
     }
 
@@ -57,11 +63,11 @@ async function saveAddress() {
         siteUrl = result.url;
         render();
         siteMessage.className = "small mt-1 text-success";
-        showMessage(siteMessage, "Adres kaydedildi.");
+        showMessage(siteMessage, t("qr.saved"));
     } catch (err) {
         console.error("Site adresi kaydedilemedi:", err);
         siteMessage.className = "small mt-1 text-danger";
-        showMessage(siteMessage, "Adres kaydedilemedi. Lütfen tekrar deneyin.");
+        showMessage(siteMessage, t("qr.saveFailed"));
     } finally {
         saveButton.disabled = false;
     }
@@ -130,13 +136,17 @@ export function initQrModal() {
     siteInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") saveAddress();
     });
+    onLanguageChange(() => {
+        // Only once the address has loaded: render() runs then and fills the texts in.
+        if (isOpen() && currentProduct && siteUrl !== null) renderTexts();
+    });
 }
 
 /** Opens the window for a product (an object with id, name and price). */
 export async function showQr(product) {
     currentProduct = product;
-    title.textContent = product.name || "QR Kod";
-    price.textContent = formatPrice(product.price);
+    title.textContent = product.name || t("qr.title");
+    price.textContent = formatPrice(product.price, getLanguage());
     showMessage(siteMessage, "");
     openDialog();
 

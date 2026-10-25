@@ -9,7 +9,8 @@ import {
     nextPriceUpdateDate,
     validateExpiryDate,
     formatPrice,
-    formatDateTr
+    formatDate,
+    categoryKey
 } from "../shared/product-logic.js";
 
 // The date logic must give the same answers wherever the visitor is, so the date tests run in
@@ -114,19 +115,31 @@ for (const zone of TIME_ZONES) {
         run("validateExpiryDate", () => {
             const now = at(2026, 10, 25, 1, 30); // just after midnight: the old UTC code saw "yesterday"
             assert.equal(validateExpiryDate({ dateType: "SKT", dateString: "", isNewProduct: true }, now), null);
-            assert.match(validateExpiryDate({ dateType: "SKT", dateString: "31/01/2030", isNewProduct: true }, now), /Geçerli/);
-            assert.match(validateExpiryDate({ dateType: "SKT", dateString: "2026-10-24", isNewProduct: true }, now), /geçmiş/);
+            assert.equal(validateExpiryDate({ dateType: "SKT", dateString: "31/01/2030", isNewProduct: true }, now), "error.date.invalid");
+            assert.equal(validateExpiryDate({ dateType: "SKT", dateString: "2026-10-24", isNewProduct: true }, now), "error.date.pastSkt");
             assert.equal(validateExpiryDate({ dateType: "SKT", dateString: "2026-10-25", isNewProduct: true }, now), null);
             assert.equal(validateExpiryDate({ dateType: "TETT", dateString: "2020-01-01", isNewProduct: true }, now), null);
             assert.equal(validateExpiryDate({ dateType: "SKT", dateString: "2020-01-01", isNewProduct: false }, now), null);
         });
 
-        run("formatDateTr does not shift the day", () => {
-            assert.equal(formatDateTr("2026-10-25"), "25 Ekim 2026");
-            assert.equal(formatDateTr("2026-01-01"), "1 Ocak 2026");
-            assert.equal(formatDateTr("2026-12-31"), "31 Aralık 2026");
-            assert.equal(formatDateTr("nope"), "Belirtilmedi");
-            assert.equal(formatDateTr(""), "Belirtilmedi");
+        run("formatDate does not shift the day, in Turkish or English", () => {
+            assert.equal(formatDate("2026-10-25"), "25 Ekim 2026");
+            assert.equal(formatDate("2026-01-01", "tr"), "1 Ocak 2026");
+            assert.equal(formatDate("2026-12-31", "tr"), "31 Aralık 2026");
+            assert.equal(formatDate("2026-10-25", "en"), "25 October 2026");
+            assert.equal(formatDate("2026-01-01", "en"), "1 January 2026");
+            assert.equal(formatDate("2026-12-31", "en"), "31 December 2026");
+            assert.equal(formatDate("nope"), null);
+            assert.equal(formatDate("", "en"), null);
+        });
+
+        run("categoryKey maps the stored Turkish categories to translation keys", () => {
+            assert.equal(categoryKey("Yiyecek"), "category.food");
+            assert.equal(categoryKey("İçecek"), "category.drink");
+            assert.equal(categoryKey("Temizlik Malzemeleri"), "category.cleaning");
+            assert.equal(categoryKey("Oyuncak"), null);
+            assert.equal(categoryKey(undefined), null);
+            assert.equal(categoryKey("toString"), null);
         });
 
         run("nextPriceUpdateDate stamps today only when the price is new or changed", () => {
@@ -214,9 +227,17 @@ describe("formatPrice", () => {
         assert.equal(formatPrice("12.5"), "12,50 ₺");
     });
 
+    test("English puts the symbol first and uses a point for decimals", () => {
+        assert.equal(formatPrice(39.9, "en"), "₺39.90");
+        assert.equal(formatPrice(1234.5, "en"), "₺1,234.50");
+        assert.equal(formatPrice(0, "en"), "₺0.00");
+        assert.equal(formatPrice("12.5", "en"), "₺12.50");
+    });
+
     test("shows a dash for anything that is not a number", () => {
         for (const bad of [undefined, null, "", "  ", false, "abc", NaN, "<img src=x onerror=alert(1)>"]) {
             assert.equal(formatPrice(bad), "—", String(bad));
+            assert.equal(formatPrice(bad, "en"), "—", String(bad));
         }
     });
 });

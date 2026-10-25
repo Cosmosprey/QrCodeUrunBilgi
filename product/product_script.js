@@ -1,7 +1,8 @@
 import { db, doc, getDoc } from "../shared/firebase.js";
 import { el, safeHttpUrl } from "../shared/dom.js";
 import { storeConfig } from "../shared/store-config.js";
-import { expiryStatus, stockStatus, discountFor, formatPrice, formatDateTr } from "../shared/product-logic.js";
+import { expiryStatus, stockStatus, discountFor, formatPrice, formatDate, categoryKey } from "../shared/product-logic.js";
+import { t, tParts, getLanguage, onLanguageChange } from "../shared/i18n.js";
 
 const params = new URLSearchParams(window.location.search);
 const productId = params.get("id");
@@ -25,24 +26,24 @@ function renderStock(stockEl, stockCount) {
 
     if (stock.level === "ok") {
         // GÜVENLİ: limitten fazla (YEŞİL)
-        stockEl.textContent = "STOKTA VAR";
+        stockEl.textContent = t("product.stock.ok");
         stockEl.className = `${base} bg-success`;
     } else if (stock.level === "low") {
         // KRİTİK: limit ve altı (TURUNCU)
-        stockEl.textContent = `SON ${stock.count} ÜRÜN!`;
+        stockEl.textContent = t("product.stock.low", { count: stock.count });
         stockEl.className = `${base} bg-warning text-dark fw-bold animate-pulse`;
     } else {
         // TÜKENDİ (KIRMIZI)
-        stockEl.textContent = "TÜKENDİ";
+        stockEl.textContent = t("product.stock.out");
         stockEl.className = `${base} bg-danger`;
     }
 }
 
 function expiryText(status) {
     switch (status.state) {
-        case "upcoming": return `${status.daysLeft} Gün Kaldı`;
-        case "today": return "Bugün son gün";
-        case "expired": return "Tarihi Geçti";
+        case "upcoming": return t("product.expiry.days", { count: status.daysLeft });
+        case "today": return t("product.expiry.today");
+        case "expired": return t("product.expiry.expired");
         default: return "";
     }
 }
@@ -51,7 +52,7 @@ function expiryText(status) {
 function renderDateBox(boxEl, p, status) {
     // MEVZUAT MANTIĞI: Eski ürünlerde dateType yoksa varsayılan SKT yap
     const dateType = p.dateType === "TETT" ? "TETT" : "SKT";
-    const dateLabel = dateType === "TETT" ? "Tavsiye Edilen Tüketim Tarihi" : "Son Kullanma Tarihi";
+    const dateLabel = dateType === "TETT" ? t("product.date.tett") : t("product.date.skt");
 
     const typeBadge = el("span", {
         className: dateType === "TETT" ? "badge bg-info text-dark ms-2" : "badge bg-danger ms-2",
@@ -68,8 +69,8 @@ function renderDateBox(boxEl, p, status) {
             attrs: { style: "font-size: 0.7rem;" }
         }, [`${dateLabel} `, typeBadge]),
         el("div", {
-            className: "fw-black text-dark mt-1",
-            text: formatDateTr(p.lastUseDate),
+            className: "text-dark mt-1",
+            text: formatDate(p.lastUseDate, getLanguage()) ?? t("product.notSpecified"),
             attrs: { style: "font-size: 1.1rem;" }
         })
     ];
@@ -87,25 +88,19 @@ function renderDateBox(boxEl, p, status) {
 }
 
 function buildCoupon(discount) {
-    const reason = discount.dateType === "TETT"
-        ? "tavsiye edilen tüketim tarihi geçtiği"
-        : "SKT'si yaklaştığı";
+    const code = el("span", { className: "badge bg-success", text: discount.couponCode, attrs: { style: "font-size: 1rem;" } });
+    const percent = el("strong", { text: t("product.coupon.discount", { percent: discount.ratePercent }) });
 
     return el("div", { className: "alert alert-success mt-3 shadow-sm animate-bounce", attrs: { id: "coupon" } }, [
         el("div", { className: "d-flex align-items-center gap-3" }, [
             el("i", { className: "bi bi-ticket-perforated-fill fs-2" }),
             el("div", {}, [
-                el("strong", { className: "text-dark", text: "Sürdürülebilirlik Fırsatı!" }),
+                el("strong", { className: "text-dark", text: t("product.coupon.title") }),
                 el("br"),
-                el("small", { className: "text-dark" }, [
-                    `Ürünün ${reason} için kasada `,
-                    el("span", { className: "badge bg-success", text: discount.couponCode, attrs: { style: "font-size: 1rem;" } }),
-                    " koduyla ",
-                    el("strong", { text: `%${discount.ratePercent} indirim` }),
-                    " kazanın!"
-                ]),
+                el("small", { className: "text-dark" },
+                    tParts(discount.dateType === "TETT" ? "product.coupon.tett" : "product.coupon.skt", { code, discount: percent })),
                 el("br"),
-                el("small", { className: "text-muted", text: "Demo özelliği: gerçek bir ödeme akışı yoktur." })
+                el("small", { className: "text-muted", text: t("product.coupon.demo") })
             ])
         ])
     ]);
@@ -118,32 +113,34 @@ function renderPrice(priceEl, p, now) {
         attrs: { style: "font-size: 0.8rem; font-weight: normal;" }
     }, [
         el("i", { className: "bi bi-clock-history" }),
-        ` Son Fiyat Güncelleme: ${formatDateTr(p.priceLastUpdate)}`
+        ` ${t("product.priceUpdated", { date: formatDate(p.priceLastUpdate, getLanguage()) ?? t("product.notSpecified") })}`
     ]);
 
     document.getElementById("coupon")?.remove();
     const discount = discountFor(p, now);
 
     if (!discount.eligible) {
-        priceEl.replaceChildren(`${formatPrice(p.price)} `, updateNote);
+        priceEl.replaceChildren(`${formatPrice(p.price, getLanguage())} `, updateNote);
         return;
     }
 
     priceEl.replaceChildren(
-        el("span", { className: "text-muted text-decoration-line-through fs-5 me-2", text: formatPrice(discount.originalPrice) }),
-        el("span", { className: "text-success fw-black", text: formatPrice(discount.finalPrice) }),
+        el("span", { className: "text-muted text-decoration-line-through fs-5 me-2", text: formatPrice(discount.originalPrice, getLanguage()) }),
+        el("span", { className: "text-success", text: formatPrice(discount.finalPrice, getLanguage()) }),
         updateNote
     );
     document.querySelector(".price-segment")?.after(buildCoupon(discount));
 }
 
-function renderProduct(p, now) {
-    document.getElementById("name").textContent = p.name ?? "";
-    document.title = p.name ? `${p.name} | Ürün Detayı` : "Ürün Detayı";
-    document.getElementById("description").textContent = p.description || "Açıklama belirtilmedi.";
-    document.getElementById("category").textContent = p.category ?? "";
+// A product category is stored in Turkish; the three known ones are shown in the current language.
+function categoryLabel(category) {
+    const key = categoryKey(category);
+    return key ? t(key) : (category ?? "");
+}
 
-    // A missing image, or one that fails to load, is replaced by a neutral icon.
+// The image is set once per product (redoing it would reload it). A missing image, or one that fails to load,
+// is replaced by a neutral icon.
+function renderImage(p) {
     const imageEl = document.getElementById("image");
     const placeholderEl = document.getElementById("image-placeholder");
     const imageUrl = safeHttpUrl(p.image);
@@ -159,6 +156,14 @@ function renderProduct(p, now) {
     } else {
         imageEl.removeAttribute("src");
     }
+}
+
+// Everything that depends on the language or on today's date.
+function renderTexts(p, now) {
+    document.getElementById("name").textContent = p.name ?? "";
+    document.title = p.name ? t("product.titleWithName", { name: p.name }) : t("product.title");
+    document.getElementById("description").textContent = p.description || t("product.noDescription");
+    document.getElementById("category").textContent = categoryLabel(p.category);
 
     renderStock(document.getElementById("stock"), p.stockCount);
     renderDateBox(document.getElementById("lastUseDate"), p, expiryStatus(p.lastUseDate, now));
@@ -189,13 +194,21 @@ async function loadProduct() {
     }
 
     try {
-        renderProduct(snap.data(), new Date());
+        shownProduct = snap.data();
+        renderImage(shownProduct);
+        renderTexts(shownProduct, new Date());
         showOnly("card");
     } catch (err) {
         console.error("Ürün gösterilemedi:", err);
         showOnly("notFound");
     }
 }
+
+// The product being shown, kept so the texts can be redrawn when the language changes.
+let shownProduct = null;
+onLanguageChange(() => {
+    if (shownProduct) renderTexts(shownProduct, new Date());
+});
 
 document.getElementById("retry-btn").addEventListener("click", loadProduct);
 

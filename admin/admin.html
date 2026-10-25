@@ -5,33 +5,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://www.gstatic.com; object-src 'none'; base-uri 'none'">
-    <title>Admin Paneli | QR Kodlu Ürün Bilgi Sistemi</title>
+    <title data-i18n="admin.title">Admin Paneli | QR Kodlu Ürün Bilgi Sistemi</title>
+    <script type="module" src="../shared/i18n-init.js"></script>
     <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../assets/css/admin.css">
 </head>
 
-<body class="admin-theme">
+<body class="admin-theme i18n-pending">
 
     <!-- GİRİŞ EKRANI (yönetici girişi yapılana kadar tek görünen bölüm) -->
     <main id="login-view" class="login-wrapper d-none">
+        <div class="lang-switch login-lang" role="group" aria-label="Dil / Language">
+            <button type="button" data-lang="tr" aria-pressed="true">TR</button>
+            <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        </div>
         <div class="admin-card login-card">
             <h1 class="h2 fw-bold mb-4"><i class="bi bi-qr-code-scan text-primary me-2" aria-hidden="true"></i>QR Panel</h1>
-            <h2 class="h5 mb-3 fw-bold">Yönetici Girişi</h2>
+            <h2 class="h5 mb-3 fw-bold" data-i18n="login.heading">Yönetici Girişi</h2>
             <form id="login-form" novalidate>
                 <div class="mb-3">
-                    <label for="login-username" class="visually-hidden">Kullanıcı adı</label>
-                    <input type="text" id="login-username" class="form-control" placeholder="Kullanıcı adı"
+                    <label for="login-username" class="visually-hidden" data-i18n="login.username">Kullanıcı adı</label>
+                    <input type="text" id="login-username" class="form-control" placeholder="Kullanıcı adı" data-i18n-placeholder="login.username"
                         autocomplete="username" autocapitalize="none" spellcheck="false" required>
                 </div>
                 <div class="mb-3">
-                    <label for="login-password" class="visually-hidden">Parola</label>
-                    <input type="password" id="login-password" class="form-control" placeholder="Parola"
+                    <label for="login-password" class="visually-hidden" data-i18n="login.password">Parola</label>
+                    <input type="password" id="login-password" class="form-control" placeholder="Parola" data-i18n-placeholder="login.password"
                         autocomplete="current-password" required>
                 </div>
                 <div id="login-error" class="alert alert-danger py-2 d-none" role="alert"></div>
                 <button type="submit" id="login-btn" class="btn btn-primary w-100 py-3 fw-bold">
-                    <span id="login-spinner" class="spinner-border spinner-border-sm me-2 d-none" aria-hidden="true"></span><span>GİRİŞ YAP</span>
+                    <span id="login-spinner" class="spinner-border spinner-border-sm me-2 d-none" aria-hidden="true"></span><span data-i18n="login.submit">GİRİŞ YAP</span>
                 </button>
             </form>
         </div>
@@ -41,38 +46,44 @@
         <div class="row">
             <!-- SOL FORM -->
             <div class="col-lg-5 col-xl-4 form-sidebar">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h1 class="h2 fw-bold mb-0"><i class="bi bi-qr-code-scan text-primary me-2" aria-hidden="true"></i>QR Panel</h1>
-                    <button type="button" id="logout-btn" class="btn btn-sm btn-outline-light" title="Çıkış yap">
-                        <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>Çıkış
-                    </button>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                    <h1 class="h2 fw-bold mb-0 text-nowrap"><i class="bi bi-qr-code-scan text-primary me-2" aria-hidden="true"></i>QR Panel</h1>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="lang-switch" role="group" aria-label="Dil / Language">
+                            <button type="button" data-lang="tr" aria-pressed="true">TR</button>
+                            <button type="button" data-lang="en" aria-pressed="false">EN</button>
+                        </div>
+                        <button type="button" id="logout-btn" class="btn btn-sm btn-outline-light text-nowrap" title="Çıkış yap" data-i18n-title="panel.logoutTitle">
+                            <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i><span data-i18n="panel.logout">Çıkış</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="admin-card">
                     <h2 id="form-title" class="h4 mb-4 fw-bold">Ürün Ekle</h2>
                     <form id="product-form">
                         <div class="mb-3">
                             <!-- İsim Alanı -->
-                            <label for="name" class="visually-hidden">Ürün adı</label>
-                            <input type="text" id="name" class="form-control" placeholder="Ürün Adı" required
+                            <label for="name" class="visually-hidden" data-i18n="form.nameLabel">Ürün adı</label>
+                            <input type="text" id="name" class="form-control" placeholder="Ürün Adı" data-i18n-placeholder="form.namePlaceholder" required
                                 minlength="2" maxlength="70">
                         </div>
                         <div class="row mb-3">
                             <!-- Fiyat Alanı -->
-                            <div class="col-7"><label for="price" class="visually-hidden">Fiyat (₺)</label><input type="number" id="price" class="form-control" min="0.01"
-                                    step="0.01" placeholder="Fiyat (₺)" required></div>
+                            <div class="col-7"><label for="price" class="visually-hidden" data-i18n="form.price">Fiyat (₺)</label><input type="number" id="price" class="form-control" min="0.01"
+                                    step="0.01" placeholder="Fiyat (₺)" data-i18n-placeholder="form.price" required></div>
                             <div class="col-5">
                                 <!-- Kategori Alanı -->
-                                <label for="category" class="visually-hidden">Kategori</label>
+                                <label for="category" class="visually-hidden" data-i18n="form.category">Kategori</label>
                                 <select id="category" class="form-select">
-                                    <option value="Yiyecek">Yiyecek</option>
-                                    <option value="İçecek">İçecek</option>
-                                    <option value="Temizlik Malzemeleri">Temizlik Malzemeleri</option>
+                                    <option value="Yiyecek" data-i18n="category.food">Yiyecek</option>
+                                    <option value="İçecek" data-i18n="category.drink">İçecek</option>
+                                    <option value="Temizlik Malzemeleri" data-i18n="category.cleaning">Temizlik Malzemeleri</option>
                                 </select>
                             </div>
                         </div>
                         <!-- Tarih Türü Seçimi -->
                         <fieldset class="mb-3">
-                            <legend class="visually-hidden">Tarih türü</legend>
+                            <legend class="visually-hidden" data-i18n="form.dateType">Tarih türü</legend>
                             <div class="d-flex gap-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="dateType" id="typeSKT"
@@ -88,23 +99,23 @@
                         </fieldset>
                         <!-- Son Kullanma Tarihi Alan -->
                         <div class="mb-3">
-                            <label for="lastUseDate" class="form-label small text-white-50 mb-1">SKT / TETT tarihi</label>
+                            <label for="lastUseDate" class="form-label small text-white-50 mb-1" data-i18n="form.date">SKT / TETT tarihi</label>
                             <input type="date" id="lastUseDate" class="form-control">
                         </div>
                         <!-- Stok Adedi Alanı -->
                         <div class="mb-3">
-                            <label for="stockCount" class="visually-hidden">Stok adedi</label>
+                            <label for="stockCount" class="visually-hidden" data-i18n="form.stockLabel">Stok adedi</label>
                             <div class="input-group">
-                                <input type="number" id="stockCount" class="form-control" placeholder="Stok Adedi"
+                                <input type="number" id="stockCount" class="form-control" placeholder="Stok Adedi" data-i18n-placeholder="form.stockPlaceholder"
                                     min="0" step="1" required>
                             </div>
                         </div>
                         <!-- Açıklama Alanı -->
-                        <div class="mb-3"><label for="description" class="visually-hidden">Ürün açıklaması</label><textarea id="description" class="form-control" rows="2" maxlength="1000"
-                                placeholder="Ürün açıklaması..."></textarea></div>
+                        <div class="mb-3"><label for="description" class="visually-hidden" data-i18n="form.descriptionLabel">Ürün açıklaması</label><textarea id="description" class="form-control" rows="2" maxlength="1000"
+                                placeholder="Ürün açıklaması..." data-i18n-placeholder="form.descriptionPlaceholder"></textarea></div>
                         <!-- Görsel URL Alanı -->
                         <div class="mb-4 d-flex align-items-center gap-2">
-                            <label for="imageFile" class="visually-hidden">Ürün görseli</label>
+                            <label for="imageFile" class="visually-hidden" data-i18n="form.image">Ürün görseli</label>
                             <input type="file" id="imageFile" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif">
                         </div>
                         <div id="form-error" class="alert alert-danger py-2 d-none" role="alert"></div>
@@ -115,18 +126,18 @@
 
             <!-- SAĞ LİSTE -->
             <div class="col-lg-7 col-xl-8 content-area">
-                <h2 class="visually-hidden">Ürünler</h2>
+                <h2 class="visually-hidden" data-i18n="list.heading">Ürünler</h2>
                 <div class="d-flex justify-content-between align-items-center mb-5">
-                    <label for="search-input" class="visually-hidden">Ürün ara</label>
+                    <label for="search-input" class="visually-hidden" data-i18n="list.searchLabel">Ürün ara</label>
                     <input type="text" id="search-input" class="form-control search-box rounded-pill ps-4"
-                        placeholder="Ürün ara...">
+                        placeholder="Ürün ara..." data-i18n-placeholder="list.searchPlaceholder">
                 </div>
                 <div id="list-error" class="alert alert-danger py-2 d-none" role="alert"></div>
                 <div class="list-row d-flex align-items-center gap-4 flex-grow-1">
-                    <button type="button" class="nav-btn" id="prevBtn" aria-label="Önceki sayfa"><i
+                    <button type="button" class="nav-btn" id="prevBtn" aria-label="Önceki sayfa" data-i18n-aria-label="list.prev"><i
                             class="bi bi-chevron-left" aria-hidden="true"></i></button>
                     <div id="product-grid" class="product-grid-container"></div>
-                    <button type="button" class="nav-btn" id="nextBtn" aria-label="Sonraki sayfa"><i
+                    <button type="button" class="nav-btn" id="nextBtn" aria-label="Sonraki sayfa" data-i18n-aria-label="list.next"><i
                             class="bi bi-chevron-right" aria-hidden="true"></i></button>
                 </div>
             </div>
@@ -148,19 +159,19 @@
             <div id="qrWarning" class="alert alert-warning py-2 small text-start d-none" role="alert"></div>
 
             <div class="qr-site-address text-start mt-3">
-                <label for="qrSiteUrl" class="form-label small text-white-50 mb-1">Site adresi (QR kodunda kullanılır)</label>
+                <label for="qrSiteUrl" class="form-label small text-white-50 mb-1" data-i18n="qr.siteLabel">Site adresi (QR kodunda kullanılır)</label>
                 <div class="input-group">
                     <input type="text" id="qrSiteUrl" class="form-control" placeholder="http://192.168.1.20:5000"
                         autocomplete="off" spellcheck="false">
-                    <button id="qrSiteSave" type="button" class="btn btn-outline-light">Kaydet</button>
+                    <button id="qrSiteSave" type="button" class="btn btn-outline-light" data-i18n="qr.save">Kaydet</button>
                 </div>
                 <div id="qrSiteMessage" class="small mt-1 d-none" role="status"></div>
             </div>
 
             <div class="qr-actions d-flex flex-wrap justify-content-center gap-2 mt-3">
-                <button id="qrDownloadBtn" type="button" class="btn btn-primary"><i class="bi bi-download me-1" aria-hidden="true"></i>PNG indir</button>
-                <button id="qrPrintBtn" type="button" class="btn btn-outline-light"><i class="bi bi-printer me-1" aria-hidden="true"></i>Yazdır</button>
-                <button id="qrCloseBtn" type="button" class="btn btn-secondary">Kapat</button>
+                <button id="qrDownloadBtn" type="button" class="btn btn-primary"><i class="bi bi-download me-1" aria-hidden="true"></i><span data-i18n="qr.download">PNG indir</span></button>
+                <button id="qrPrintBtn" type="button" class="btn btn-outline-light"><i class="bi bi-printer me-1" aria-hidden="true"></i><span data-i18n="qr.print">Yazdır</span></button>
+                <button id="qrCloseBtn" type="button" class="btn btn-secondary" data-i18n="qr.close">Kapat</button>
             </div>
         </div>
 

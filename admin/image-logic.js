@@ -1,6 +1,8 @@
 // Pure size maths for preparing product photos before upload. No DOM: easy to test.
 // The browser does the actual decoding and encoding in image-convert.js.
 
+import { intlLocale } from "../shared/i18n-core.js";
+
 export const MAX_SIDE = 1200;                   // longest side after resizing, in pixels
 export const QUALITY_STEPS = [0.85, 0.75, 0.65, 0.5, 0.4]; // tried in turn until the result fits the upload limit
 export const KEEP_AS_IS_BYTES = 300 * 1024;     // a picture this small (and not larger than MAX_SIDE) is left alone
@@ -29,9 +31,9 @@ export function needsConversion({ type, size }, { width, height }) {
     return !(fitsAlready && size <= KEEP_AS_IS_BYTES);
 }
 
-/** "180 KB", "4,2 MB" (one decimal for megabytes, comma or point depending on the locale). */
-export function formatBytes(bytes, locale = "tr-TR") {
+/** "180 KB", "4,2 MB" / "4.2 MB" (one decimal for megabytes, in the language's number format). */
+export function formatBytes(bytes, language = "tr") {
     if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-    const megabytes = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(bytes / (1024 * 1024));
+    const megabytes = new Intl.NumberFormat(intlLocale(language), { maximumFractionDigits: 1 }).format(bytes / (1024 * 1024));
     return `${megabytes} MB`;
 }

@@ -8,6 +8,7 @@ import { prepareImage, ImageError } from "./image-convert.js";
 import { formatBytes } from "./image-logic.js";
 import { showMessage } from "./ui.js";
 import { showToast } from "./toast.js";
+import { t, getLanguage, onLanguageChange } from "../shared/i18n.js";
 
 const form = document.getElementById("product-form");
 const formError = document.getElementById("form-error");
@@ -23,14 +24,18 @@ const field = (id) => document.getElementById(id);
 
 function saveErrorMessage(err) {
     if (err instanceof ImageError) {
-        return err.code === "too-large"
-            ? "Görsel yeterince küçültülemedi. Daha küçük bir görsel seçin."
-            : "Görsel okunamadı. Başka bir görsel deneyin.";
+        return t(err.code === "too-large" ? "error.save.imageTooLarge" : "error.save.imageUnreadable");
     }
     if (err?.code === "permission-denied" || err?.code === "storage/unauthorized") {
-        return "Bu işlem için yetkiniz yok veya girilen bilgiler geçersiz.";
+        return t("error.save.denied");
     }
-    return "Ürün kaydedilemedi. Lütfen tekrar deneyin.";
+    return t("error.save.failed");
+}
+
+/** The title and the submit button say "add" or "edit" depending on what the form is doing. */
+function renderFormTexts() {
+    formTitle.textContent = t(editingId ? "form.editTitle" : "form.addTitle");
+    submitLabel.textContent = t(editingId ? "form.update" : "form.save");
 }
 
 /** While a save is running the button is disabled and shows a spinner. */
@@ -60,16 +65,14 @@ export function startEdit(p) {
 
     editingId = p.id;
 
-    formTitle.textContent = "Ürünü Düzenle";
-    submitLabel.textContent = "GÜNCELLE";
+    renderFormTexts();
     submitButton.className = "btn btn-success w-100 py-3 fw-bold";
 }
 
 export function resetForm() {
     form.reset();
     editingId = null;
-    formTitle.textContent = "Ürün Ekle";
-    submitLabel.textContent = "KAYDET";
+    renderFormTexts();
     submitButton.className = "btn btn-primary w-100 py-3 fw-bold";
     currentImageUrl = "";
     showMessage(formError, "");
@@ -77,6 +80,9 @@ export function resetForm() {
 
 /** Connects the form. findProduct(id) returns the stored product; onSaved() runs after a successful save. */
 export function initProductForm({ findProduct, onSaved }) {
+    renderFormTexts();
+    onLanguageChange(renderFormTexts);
+
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         showMessage(formError, "");
@@ -84,7 +90,7 @@ export function initProductForm({ findProduct, onSaved }) {
         const picked = field("imageFile").files[0];
         const fileProblem = validateImageFile(picked);
         if (fileProblem) {
-            showMessage(formError, fileProblem);
+            showMessage(formError, t(fileProblem));
             return;
         }
 
@@ -95,7 +101,7 @@ export function initProductForm({ findProduct, onSaved }) {
             isNewProduct: !editingId
         });
         if (dateProblem) {
-            showMessage(formError, dateProblem);
+            showMessage(formError, t(dateProblem));
             return;
         }
 
@@ -146,9 +152,9 @@ export function initProductForm({ findProduct, onSaved }) {
             const wasEditing = Boolean(editingId);
             resetForm();
             await onSaved();
-            const saved = wasEditing ? "Ürün güncellendi." : "Ürün kaydedildi.";
+            const saved = t(wasEditing ? "toast.updated" : "toast.saved");
             showToast(prepared?.converted
-                ? `${saved} Görsel küçültüldü: ${formatBytes(picked.size)} → ${formatBytes(file.size)}.`
+                ? t("toast.shrunk", { saved, from: formatBytes(picked.size, getLanguage()), to: formatBytes(file.size, getLanguage()) })
                 : saved);
         } catch (err) {
             console.error("Kaydetme hatası:", err);

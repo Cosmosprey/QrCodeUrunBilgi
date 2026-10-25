@@ -204,3 +204,35 @@ body.product-theme {
 .product-theme .info-box .text-danger {
     color: #bb2d3b !important;
 }
+
+/* Language switch (TR / EN) */
+
+.i18n-pending {
+    visibility: hidden; /* until the language is applied, so the wrong language never flashes */
+}
+
+.product-theme .product-lang {
+    position: fixed;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 10;
+    display: inline-flex;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.product-theme .product-lang button {
+    background: transparent;
+    border: 0;
+    color: #1e293b;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.35rem 0.75rem;
+}
+
+.product-theme .product-lang button[aria-pressed="true"] {
+    background: #1e293b;
+    color: #fff;
+}

@@ -16,17 +16,17 @@ export const ALLOWED_IMAGE_TYPES = {
     "image/gif": "gif"
 };
 
-/** Returns a (Turkish) error message for an unacceptable image file, or null when it is fine. */
+/** Returns the translation key of an error message for an unacceptable image file, or null when it is fine. */
 export function validateImageFile(file) {
     if (!file) return null;
     if (!Object.hasOwn(ALLOWED_IMAGE_TYPES, file.type)) {
-        return "Görsel JPEG, PNG, WebP veya GIF olmalıdır.";
+        return "error.image.type";
     }
     if (file.type === "image/gif" && file.size > MAX_IMAGE_BYTES) {
-        return "GIF dosyaları en fazla 2 MB olabilir.";
+        return "error.image.gifTooLarge";
     }
     if (file.size > MAX_INPUT_BYTES) {
-        return "Görsel en fazla 25 MB olabilir.";
+        return "error.image.tooLarge";
     }
     return null;
 }

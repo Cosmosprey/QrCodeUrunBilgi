@@ -158,6 +158,15 @@ body.admin-theme {
     text-align: center;
 }
 
+/* Bootstrap's red and green are too dark for the dark box (contrast below 4.5:1) */
+.admin-theme .qr-modal-box .text-danger {
+    color: #f87171 !important;
+}
+
+.admin-theme .qr-modal-box .text-success {
+    color: #4ade80 !important;
+}
+
 .admin-theme .qr-link {
     font-size: 12px;
     margin-top: 10px;
@@ -376,4 +385,41 @@ body.admin-theme {
     .admin-theme .toast-region {
         display: none !important;
     }
+}
+
+/* Language switch (TR / EN) */
+
+.i18n-pending {
+    visibility: hidden; /* until the language is applied, so the wrong language never flashes */
+}
+
+.lang-switch {
+    display: inline-flex;
+    border: 1px solid #334155;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.lang-switch button {
+    background: transparent;
+    border: 0;
+    color: #cbd5e1;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.3rem 0.7rem;
+}
+
+.lang-switch button[aria-pressed="true"] {
+    background: #2563eb;
+    color: #fff;
+}
+
+.admin-theme .login-wrapper {
+    position: relative;
+}
+
+.admin-theme .login-lang {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
 }

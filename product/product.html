@@ -5,40 +5,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://www.gstatic.com; object-src 'none'; base-uri 'none'">
-    <title>Ürün Detayı</title>
+    <title data-i18n="product.title">Ürün Detayı</title>
+    <script type="module" src="../shared/i18n-init.js"></script>
     <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../assets/css/product.css">
 </head>
 
-<body class="product-theme">
+<body class="product-theme i18n-pending">
 
     <main>
+    <div class="lang-switch product-lang" role="group" aria-label="Dil / Language">
+        <button type="button" data-lang="tr" aria-pressed="true">TR</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
     <!-- Yükleniyor Ekranı -->
     <div id="loading" class="text-center" style="margin-top: 100px;">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2 text-dark">Ürün bilgileri getiriliyor...</p>
+        <p class="mt-2 text-dark" data-i18n="product.loading">Ürün bilgileri getiriliyor...</p>
     </div>
 
     <!-- Hata Mesajı -->
     <div id="error" class="container text-center d-none" style="margin-top: 100px;">
         <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
-        <h1 class="h3 mt-3 text-dark">Ürün Bulunamadı</h1>
-        <p class="text-dark">Lütfen QR kodu tekrar okutun veya yöneticiyle iletişime geçin.</p>
+        <h1 class="h3 mt-3 text-dark" data-i18n="product.notFound.title">Ürün Bulunamadı</h1>
+        <p class="text-dark" data-i18n="product.notFound.text">Lütfen QR kodu tekrar okutun veya yöneticiyle iletişime geçin.</p>
     </div>
 
     <!-- Bağlantı Sorunu (ürün var olabilir ama bilgiler alınamadı) -->
     <div id="load-error" class="container text-center d-none" style="margin-top: 100px;">
         <i class="bi bi-wifi-off text-warning" style="font-size: 3rem;"></i>
-        <h1 class="h3 mt-3 text-dark">Bağlantı Sorunu</h1>
-        <p class="text-dark">Ürün bilgileri alınamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.</p>
-        <button id="retry-btn" type="button" class="btn btn-primary">Tekrar Dene</button>
+        <h1 class="h3 mt-3 text-dark" data-i18n="product.loadError.title">Bağlantı Sorunu</h1>
+        <p class="text-dark" data-i18n="product.loadError.text">Ürün bilgileri alınamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.</p>
+        <button id="retry-btn" type="button" class="btn btn-primary" data-i18n="product.retry">Tekrar Dene</button>
     </div>
 
     <!-- Ürün İçeriği (Başlangıçta Gizli) -->
     <div id="product-card" class="d-none">
         <div class="hero-section">
-            <img id="image" src="" class="hero-img" alt="Ürün">
+            <img id="image" src="" class="hero-img" alt="Ürün" data-i18n-alt="product.image">
             <div id="image-placeholder" class="hero-placeholder d-none"><i class="bi bi-image" aria-hidden="true"></i></div>
         </div>
 
@@ -54,13 +59,13 @@
 
             <!-- 2. GRUP: FİYAT VE İNDİRİM -->
             <div class="content-segment price-segment">
-                <p class="segment-label text-dark" style="font-size: 0.9rem;">Satış Fiyatı</p>
+                <p class="segment-label text-dark" style="font-size: 0.9rem;" data-i18n="product.priceLabel">Satış Fiyatı</p>
                 <div id="price" class="price-tag text-dark fw-bold" style="font-size: 2.3rem">0₺</div>
             </div>
 
             <!-- 3. GRUP: AÇIKLAMA -->
             <div class="content-segment mb-4">
-                <p class="segment-label text-dark">Ürün Açıklaması</p>
+                <p class="segment-label text-dark" data-i18n="product.descriptionLabel">Ürün Açıklaması</p>
                 <p id="description" class="product-description text-dark mb-0">Açıklama yükleniyor...</p>
             </div>
 

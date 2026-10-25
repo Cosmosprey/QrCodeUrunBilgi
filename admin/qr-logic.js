@@ -2,7 +2,7 @@
 
 /**
  * Checks and tidies the site address typed by the admin.
- * Returns { url } (no trailing slash) or { error } with a (Turkish) message.
+ * Returns { url } (no trailing slash) or { error } with the translation key of a message.
  */
 export function normalizeSiteUrl(input) {
     const text = String(input ?? "").trim();
@@ -11,17 +11,17 @@ export function normalizeSiteUrl(input) {
     try {
         url = new URL(text);
     } catch {
-        return { error: "Geçerli bir adres girin. Adres http:// veya https:// ile başlamalıdır (örn. http://192.168.1.20:5000)." };
+        return { error: "error.site.invalid" };
     }
 
     if (url.protocol !== "http:" && url.protocol !== "https:") {
-        return { error: "Adres http:// veya https:// ile başlamalıdır." };
+        return { error: "error.site.scheme" };
     }
     if (url.username || url.password) {
-        return { error: "Adres kullanıcı adı veya parola içeremez." };
+        return { error: "error.site.credentials" };
     }
     if (url.search || url.hash) {
-        return { error: "Adres ? veya # içeremez." };
+        return { error: "error.site.queryOrHash" };
     }
 
     return { url: `${url.origin}${url.pathname}`.replace(/\/+$/, "") };
