@@ -1,4 +1,5 @@
 # Keeps the versions of the GitHub Actions used in .github/workflows up to date (one pull request a month at most).
+# All Actions updates arrive together in one pull request, so one CI run tests them as they will be used.
 # The npm packages are updated by hand: the Firebase SDK version in the pages must match the package.json one.
 
 version: 2
@@ -7,3 +8,6 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    groups:
+      github-actions:
+        patterns: ["*"]
