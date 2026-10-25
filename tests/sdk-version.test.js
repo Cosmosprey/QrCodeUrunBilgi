@@ -13,7 +13,9 @@ test("every CDN import uses the same Firebase SDK version as the firebase dev de
     const used = new Set();
 
     for (const file of FILES) {
-        const versions = [...readFileSync(file, "utf8").matchAll(/gstatic\.com\/firebasejs\/([0-9][^/]*)\//g)].map((m) => m[1]);
+        const versions = [...readFileSync(file, "utf8").matchAll(/gstatic\.com\/firebasejs\/([0-9][^/]*)\//g)].map(
+            (m) => m[1]
+        );
         assert.ok(versions.length > 0, `${file} has no Firebase CDN import`);
         versions.forEach((version) => used.add(version));
     }

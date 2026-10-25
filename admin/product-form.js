@@ -153,9 +153,15 @@ export function initProductForm({ findProduct, onSaved }) {
             resetForm();
             await onSaved();
             const saved = t(wasEditing ? "toast.updated" : "toast.saved");
-            showToast(prepared?.converted
-                ? t("toast.shrunk", { saved, from: formatBytes(picked.size, getLanguage()), to: formatBytes(file.size, getLanguage()) })
-                : saved);
+            showToast(
+                prepared?.converted
+                    ? t("toast.shrunk", {
+                          saved,
+                          from: formatBytes(picked.size, getLanguage()),
+                          to: formatBytes(file.size, getLanguage())
+                      })
+                    : saved
+            );
         } catch (err) {
             console.error("Kaydetme hatası:", err);
             showMessage(formError, saveErrorMessage(err));

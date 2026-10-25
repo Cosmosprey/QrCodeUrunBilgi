@@ -1,0 +1,13 @@
+# Vendored libraries and generated files
+assets/js/
+assets/css/*.min.css
+assets/css/bootstrap*
+node_modules/
+package-lock.json
+test-results/
+playwright-report/
+
+# Only the JavaScript and the two page stylesheets are formatted
+*.html
+*.md
+*.json

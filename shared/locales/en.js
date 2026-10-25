@@ -78,7 +78,8 @@ export const en = {
     "error.image.tooLarge": "The image can be at most 25 MB.",
     "error.date.invalid": "Enter a valid date.",
     "error.date.pastSkt": "A product whose use-by date has passed cannot be added.",
-    "error.site.invalid": "Enter a valid address. It must start with http:// or https:// (e.g. http://192.168.1.20:5000).",
+    "error.site.invalid":
+        "Enter a valid address. It must start with http:// or https:// (e.g. http://192.168.1.20:5000).",
     "error.site.scheme": "The address must start with http:// or https://.",
     "error.site.credentials": "The address cannot contain a user name or password.",
     "error.site.queryOrHash": "The address cannot contain ? or #.",
@@ -90,7 +91,8 @@ export const en = {
     "qr.download": "Download PNG",
     "qr.print": "Print",
     "qr.close": "Close",
-    "qr.localWarning": "This address only works on this computer: phones and other devices cannot reach \"localhost\", so scanning the QR code would not open the page. Enter your computer's network address and press Save (e.g. http://192.168.1.20:5000).",
+    "qr.localWarning":
+        'This address only works on this computer: phones and other devices cannot reach "localhost", so scanning the QR code would not open the page. Enter your computer\'s network address and press Save (e.g. http://192.168.1.20:5000).',
     "qr.saved": "Address saved.",
     "qr.saveFailed": "The address could not be saved. Please try again.",
 
@@ -99,7 +101,8 @@ export const en = {
     "product.notFound.title": "Product Not Found",
     "product.notFound.text": "Please scan the QR code again or contact the manager.",
     "product.loadError.title": "Connection Problem",
-    "product.loadError.text": "The product information could not be loaded. Check your internet connection and try again.",
+    "product.loadError.text":
+        "The product information could not be loaded. Check your internet connection and try again.",
     "product.retry": "Try Again",
     "product.image": "Product",
     "product.priceLabel": "Price",
@@ -118,7 +121,8 @@ export const en = {
     "product.expiry.expired": "Expired",
     "product.coupon.title": "Sustainability deal!",
     "product.coupon.skt": "Because the use-by date is near, get {discount} at the checkout with the code {code}!",
-    "product.coupon.tett": "Because the best-before date has passed, get {discount} at the checkout with the code {code}!",
+    "product.coupon.tett":
+        "Because the best-before date has passed, get {discount} at the checkout with the code {code}!",
     "product.coupon.discount": "{percent}% off",
     "product.coupon.demo": "Demo feature: there is no real checkout."
 };

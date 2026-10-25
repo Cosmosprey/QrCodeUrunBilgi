@@ -222,13 +222,20 @@ npm run emulators
 
 In `shared/firebase-config.js` set `projectId` to `demo-qr-product-info` and `useEmulator` to `true`. In a second terminal run `npm run seed`, which creates the development admin (username `admin`, password `admin123`). Then open `http://localhost:5000/admin/admin.html` and sign in. Emulator data is kept in memory and is lost when the emulators stop (run the seed command again after a restart).
 
-### Tests
+### Tests and code quality
 
 ```bash
-npm test
+npm test               # unit tests + security rules tests (starts the Firestore and Storage emulators)
+npm run test:unit      # only the unit tests; no emulator needed
+npm run test:e2e       # browser tests (see below)
+npm run lint           # ESLint
+npm run format:check   # Prettier (npm run format fixes the files)
 ```
 
-This starts the Firestore and Storage emulators and runs the security rules tests (who may read, write and upload what, and which invalid data is rejected) together with the unit tests in `tests/`. It needs Node.js 24.12 or newer and Java.
+* `npm test` runs the security rules tests (who may read, write and upload what, and which invalid data is rejected) together with the unit tests in `tests/`. It needs Node.js 24.12 or newer and Java.
+* `npm run test:e2e` starts the emulators and opens the admin panel and the customer page in Chromium with [Playwright](https://playwright.dev): signing in, adding / editing / deleting products, the QR window, the discount texts, the Turkish / English switch, photo shrinking and an automatic accessibility scan (axe-core) of every screen. Every test also fails on uncaught errors and on Content Security Policy violations. The first time, install the browser with `npx playwright install chromium`. The tests only ever talk to the emulators: they stop if `shared/firebase-config.js` points at a real project.
+* ESLint finds mistakes (unused variables, `==`, ...) and enforces the project's security rule: HTML strings are never assigned (`innerHTML`, `insertAdjacentHTML`, ...). Prettier formats the JavaScript and the two page stylesheets.
+* [GitHub Actions](.github/workflows/ci.yml) runs lint, the format check, `npm test` and the browser tests on every pull request and every push to `main`.
 
 ### Required Firebase Services
 

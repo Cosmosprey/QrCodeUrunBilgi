@@ -35,11 +35,13 @@ export function isLocalAddress(siteUrl) {
     } catch {
         return false;
     }
-    return hostname === "localhost"
-        || hostname.endsWith(".localhost")
-        || /^127(\.\d{1,3}){3}$/.test(hostname)
-        || hostname === "[::1]"
-        || hostname === "0.0.0.0";
+    return (
+        hostname === "localhost" ||
+        hostname.endsWith(".localhost") ||
+        /^127(\.\d{1,3}){3}$/.test(hostname) ||
+        hostname === "[::1]" ||
+        hostname === "0.0.0.0"
+    );
 }
 
 /** The address a QR code points to. */

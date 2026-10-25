@@ -36,7 +36,9 @@ describe("the time zone switch used by these tests actually works", () => {
     test("each zone has a different UTC offset", () => {
         const offsets = TIME_ZONES.map((zone) => {
             let offset;
-            inTimeZone(zone, () => { offset = new Date(2026, 9, 25, 12).getTimezoneOffset(); });
+            inTimeZone(zone, () => {
+                offset = new Date(2026, 9, 25, 12).getTimezoneOffset();
+            });
             return offset;
         });
         assert.deepEqual(offsets, [-840, -180, 0, 420]);
@@ -54,7 +56,13 @@ for (const zone of TIME_ZONES) {
         });
 
         run("expiry day is 0 days away at any time of day (never negative, never -0)", () => {
-            for (const [h, m, s] of [[0, 0, 1], [1, 30, 0], [12, 0, 0], [15, 0, 0], [23, 59, 59]]) {
+            for (const [h, m, s] of [
+                [0, 0, 1],
+                [1, 30, 0],
+                [12, 0, 0],
+                [15, 0, 0],
+                [23, 59, 59]
+            ]) {
                 const result = daysUntil("2026-10-25", at(2026, 10, 25, h, m, s));
                 assert.ok(Object.is(result, 0), `${h}:${m}:${s} gave ${result}`);
             }
@@ -79,8 +87,20 @@ for (const zone of TIME_ZONES) {
 
         run("rejects anything that is not a real YYYY-MM-DD date", () => {
             const now = at(2026, 10, 25);
-            for (const bad of ["", null, undefined, 20261025, "31/01/2030", "2026-1-5", "2026-02-30", "2027-02-29",
-                "2026-13-01", "2026-00-10", "2026-10-25T10:00:00Z", " 2026-10-25"]) {
+            for (const bad of [
+                "",
+                null,
+                undefined,
+                20261025,
+                "31/01/2030",
+                "2026-1-5",
+                "2026-02-30",
+                "2027-02-29",
+                "2026-13-01",
+                "2026-00-10",
+                "2026-10-25T10:00:00Z",
+                " 2026-10-25"
+            ]) {
                 assert.equal(daysUntil(bad, now), null, JSON.stringify(bad));
             }
             assert.equal(daysUntil("2028-02-29", now) !== null, true); // real leap day
@@ -98,8 +118,8 @@ for (const zone of TIME_ZONES) {
             const product = (date) => ({ price: 100, dateType: "SKT", lastUseDate: date });
             const now = at(2026, 10, 25, 15);
             assert.equal(discountFor(product("2026-10-29"), now).eligible, false); // 4 days left
-            assert.equal(discountFor(product("2026-10-28"), now).eligible, true);  // 3 days left
-            assert.equal(discountFor(product("2026-10-25"), now).eligible, true);  // last day
+            assert.equal(discountFor(product("2026-10-28"), now).eligible, true); // 3 days left
+            assert.equal(discountFor(product("2026-10-25"), now).eligible, true); // last day
             assert.equal(discountFor(product("2026-10-24"), now).eligible, false); // expired
         });
 
@@ -115,11 +135,26 @@ for (const zone of TIME_ZONES) {
         run("validateExpiryDate", () => {
             const now = at(2026, 10, 25, 1, 30); // just after midnight: the old UTC code saw "yesterday"
             assert.equal(validateExpiryDate({ dateType: "SKT", dateString: "", isNewProduct: true }, now), null);
-            assert.equal(validateExpiryDate({ dateType: "SKT", dateString: "31/01/2030", isNewProduct: true }, now), "error.date.invalid");
-            assert.equal(validateExpiryDate({ dateType: "SKT", dateString: "2026-10-24", isNewProduct: true }, now), "error.date.pastSkt");
-            assert.equal(validateExpiryDate({ dateType: "SKT", dateString: "2026-10-25", isNewProduct: true }, now), null);
-            assert.equal(validateExpiryDate({ dateType: "TETT", dateString: "2020-01-01", isNewProduct: true }, now), null);
-            assert.equal(validateExpiryDate({ dateType: "SKT", dateString: "2020-01-01", isNewProduct: false }, now), null);
+            assert.equal(
+                validateExpiryDate({ dateType: "SKT", dateString: "31/01/2030", isNewProduct: true }, now),
+                "error.date.invalid"
+            );
+            assert.equal(
+                validateExpiryDate({ dateType: "SKT", dateString: "2026-10-24", isNewProduct: true }, now),
+                "error.date.pastSkt"
+            );
+            assert.equal(
+                validateExpiryDate({ dateType: "SKT", dateString: "2026-10-25", isNewProduct: true }, now),
+                null
+            );
+            assert.equal(
+                validateExpiryDate({ dateType: "TETT", dateString: "2020-01-01", isNewProduct: true }, now),
+                null
+            );
+            assert.equal(
+                validateExpiryDate({ dateType: "SKT", dateString: "2020-01-01", isNewProduct: false }, now),
+                null
+            );
         });
 
         run("formatDate does not shift the day, in Turkish or English", () => {
@@ -144,11 +179,26 @@ for (const zone of TIME_ZONES) {
 
         run("nextPriceUpdateDate stamps today only when the price is new or changed", () => {
             const now = at(2026, 10, 25, 1, 30);
-            assert.equal(nextPriceUpdateDate({ previousPrice: 10, previousDate: "2026-09-01", newPrice: 10, now }), "2026-09-01");
-            assert.equal(nextPriceUpdateDate({ previousPrice: 10, previousDate: "2026-09-01", newPrice: 12, now }), "2026-10-25");
-            assert.equal(nextPriceUpdateDate({ previousPrice: undefined, previousDate: undefined, newPrice: 12, now }), "2026-10-25");
-            assert.equal(nextPriceUpdateDate({ previousPrice: 10, previousDate: "garbage", newPrice: 10, now }), "2026-10-25");
-            assert.equal(nextPriceUpdateDate({ previousPrice: 10, previousDate: "2026-09-01", newPrice: "10", now }), "2026-09-01");
+            assert.equal(
+                nextPriceUpdateDate({ previousPrice: 10, previousDate: "2026-09-01", newPrice: 10, now }),
+                "2026-09-01"
+            );
+            assert.equal(
+                nextPriceUpdateDate({ previousPrice: 10, previousDate: "2026-09-01", newPrice: 12, now }),
+                "2026-10-25"
+            );
+            assert.equal(
+                nextPriceUpdateDate({ previousPrice: undefined, previousDate: undefined, newPrice: 12, now }),
+                "2026-10-25"
+            );
+            assert.equal(
+                nextPriceUpdateDate({ previousPrice: 10, previousDate: "garbage", newPrice: 10, now }),
+                "2026-10-25"
+            );
+            assert.equal(
+                nextPriceUpdateDate({ previousPrice: 10, previousDate: "2026-09-01", newPrice: "10", now }),
+                "2026-09-01"
+            );
         });
     });
 }
@@ -214,7 +264,10 @@ describe("discountFor: amounts and edge cases", () => {
         const config = { enabled: false, rate: 0.5, sktDaysBeforeExpiry: 10, couponCode: "HALF" };
         assert.equal(discountFor(expiringSoon(100), now, config).eligible, false);
         const tuned = discountFor(expiringSoon(100, { lastUseDate: "2026-11-03" }), now, { ...config, enabled: true });
-        assert.deepEqual([tuned.eligible, tuned.finalPrice, tuned.ratePercent, tuned.couponCode], [true, 50, 50, "HALF"]);
+        assert.deepEqual(
+            [tuned.eligible, tuned.finalPrice, tuned.ratePercent, tuned.couponCode],
+            [true, 50, 50, "HALF"]
+        );
     });
 });
 

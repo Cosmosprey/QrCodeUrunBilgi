@@ -41,15 +41,27 @@ describe("normalizeSiteUrl", () => {
 
 describe("isLocalAddress", () => {
     test("detects addresses only this computer can reach", () => {
-        for (const local of ["http://localhost:5000", "http://LOCALHOST", "http://127.0.0.1:5000", "http://127.1.2.3",
-            "http://[::1]:5000", "http://0.0.0.0:5000", "http://shop.localhost:5000"]) {
+        for (const local of [
+            "http://localhost:5000",
+            "http://LOCALHOST",
+            "http://127.0.0.1:5000",
+            "http://127.1.2.3",
+            "http://[::1]:5000",
+            "http://0.0.0.0:5000",
+            "http://shop.localhost:5000"
+        ]) {
             assert.equal(isLocalAddress(local), true, local);
         }
     });
 
     test("network and public addresses are fine", () => {
-        for (const reachable of ["http://192.168.1.20:5000", "http://10.0.0.5", "https://example.com", "http://magaza.local:5000",
-            "http://localhost.example.com"]) {
+        for (const reachable of [
+            "http://192.168.1.20:5000",
+            "http://10.0.0.5",
+            "https://example.com",
+            "http://magaza.local:5000",
+            "http://localhost.example.com"
+        ]) {
             assert.equal(isLocalAddress(reachable), false, reachable);
         }
     });
@@ -62,12 +74,21 @@ describe("isLocalAddress", () => {
 
 describe("qrTargetUrl", () => {
     test("builds the product page address", () => {
-        assert.equal(qrTargetUrl("http://192.168.1.20:5000", "abc123"), "http://192.168.1.20:5000/product/product.html?id=abc123");
-        assert.equal(qrTargetUrl("https://example.com/magaza", "abc123"), "https://example.com/magaza/product/product.html?id=abc123");
+        assert.equal(
+            qrTargetUrl("http://192.168.1.20:5000", "abc123"),
+            "http://192.168.1.20:5000/product/product.html?id=abc123"
+        );
+        assert.equal(
+            qrTargetUrl("https://example.com/magaza", "abc123"),
+            "https://example.com/magaza/product/product.html?id=abc123"
+        );
     });
 
     test("encodes the id so it cannot change the address", () => {
-        assert.equal(qrTargetUrl("https://example.com", "a b&c=d#e"), "https://example.com/product/product.html?id=a%20b%26c%3Dd%23e");
+        assert.equal(
+            qrTargetUrl("https://example.com", "a b&c=d#e"),
+            "https://example.com/product/product.html?id=a%20b%26c%3Dd%23e"
+        );
     });
 });
 

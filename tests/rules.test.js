@@ -2,11 +2,7 @@
 
 import { test, describe, before, after, beforeEach } from "node:test";
 import { readFileSync } from "node:fs";
-import {
-    initializeTestEnvironment,
-    assertFails,
-    assertSucceeds
-} from "@firebase/rules-unit-testing";
+import { initializeTestEnvironment, assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import { doc, getDoc, getDocs, collection, setDoc, deleteDoc, addDoc } from "firebase/firestore";
 import { ref, uploadBytes, getBytes, deleteObject, listAll } from "firebase/storage";
 
@@ -90,7 +86,8 @@ describe("firestore: who may do what", () => {
 
 describe("firestore: site address setting", () => {
     const site = (context) => doc(context.firestore(), "settings", "site");
-    const withSetting = () => testEnv.withSecurityRulesDisabled((context) => setDoc(site(context), { siteUrl: "http://192.168.1.20:5000" }));
+    const withSetting = () =>
+        testEnv.withSecurityRulesDisabled((context) => setDoc(site(context), { siteUrl: "http://192.168.1.20:5000" }));
 
     test("only the admin can read it", async () => {
         await withSetting();
@@ -115,7 +112,16 @@ describe("firestore: site address setting", () => {
     });
 
     test("rejects anything that is not an http(s) address", async () => {
-        for (const bad of ["javascript:alert(1)", "ftp://example.com", "192.168.1.20:5000", "http://with space.example", "", "http://", 42, null]) {
+        for (const bad of [
+            "javascript:alert(1)",
+            "ftp://example.com",
+            "192.168.1.20:5000",
+            "http://with space.example",
+            "",
+            "http://",
+            42,
+            null
+        ]) {
             await assertFails(setDoc(site(admin()), { siteUrl: bad }));
         }
         await assertFails(setDoc(site(admin()), { siteUrl: "https://example.com/" + "x".repeat(200) }));

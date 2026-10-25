@@ -24,7 +24,8 @@ function parseDateString(value) {
     const month = Number(match[2]);
     const day = Number(match[3]);
     const check = new Date(Date.UTC(year, month - 1, day));
-    const isRealDate = check.getUTCFullYear() === year && check.getUTCMonth() === month - 1 && check.getUTCDate() === day;
+    const isRealDate =
+        check.getUTCFullYear() === year && check.getUTCMonth() === month - 1 && check.getUTCDate() === day;
     return isRealDate ? { year, month, day } : null;
 }
 
@@ -69,9 +70,8 @@ export function discountFor(product, now = new Date(), discountConfig = storeCon
 
     // Older records have no dateType: they count as SKT.
     const dateType = product.dateType === "TETT" ? "TETT" : "SKT";
-    const eligible = dateType === "TETT"
-        ? daysLeft < 0
-        : daysLeft >= 0 && daysLeft <= discountConfig.sktDaysBeforeExpiry;
+    const eligible =
+        dateType === "TETT" ? daysLeft < 0 : daysLeft >= 0 && daysLeft <= discountConfig.sktDaysBeforeExpiry;
     if (!eligible) return NO_DISCOUNT;
 
     // Work in kuruş so results like 19.99 * 0.8 round correctly.
@@ -110,8 +110,8 @@ export function validateExpiryDate({ dateType, dateString, isNewProduct }, now =
 
 // Categories are stored in Turkish (they are the values of the admin form's select); this maps them to translation keys.
 const CATEGORY_KEYS = {
-    "Yiyecek": "category.food",
-    "İçecek": "category.drink",
+    Yiyecek: "category.food",
+    İçecek: "category.drink",
     "Temizlik Malzemeleri": "category.cleaning"
 };
 
@@ -139,6 +139,9 @@ export function formatPrice(value, language = "tr") {
 export function formatDate(dateString, language = "tr") {
     const date = parseDateString(dateString);
     if (!date) return null;
-    return new Date(date.year, date.month - 1, date.day)
-        .toLocaleDateString(intlLocale(language), { year: "numeric", month: "long", day: "numeric" });
+    return new Date(date.year, date.month - 1, date.day).toLocaleDateString(intlLocale(language), {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    });
 }

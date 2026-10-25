@@ -13,8 +13,8 @@ export const storeConfig = {
     //  - Products without a date, or SKT products that are already expired, get no discount.
     discount: {
         enabled: true,
-        rate: 0.2,               // 0.2 = 20 % off
+        rate: 0.2, // 0.2 = 20 % off
         sktDaysBeforeExpiry: 3,
-        couponCode: "KAZAN20"    // only displayed; nothing validates it
+        couponCode: "KAZAN20" // only displayed; nothing validates it
     }
 };

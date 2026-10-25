@@ -34,16 +34,21 @@ function stockBadge(value) {
 }
 
 function actionButton(className, title, icon, onClick) {
-    return el("button", {
-        className: `btn btn-sm ${className} flex-grow-1`,
-        attrs: { title, "aria-label": title, type: "button" },
-        on: { click: onClick }
-    }, [el("i", { className: `bi ${icon}`, attrs: { "aria-hidden": "true" } })]);
+    return el(
+        "button",
+        {
+            className: `btn btn-sm ${className} flex-grow-1`,
+            attrs: { title, "aria-label": title, type: "button" },
+            on: { click: onClick }
+        },
+        [el("i", { className: `bi ${icon}`, attrs: { "aria-hidden": "true" } })]
+    );
 }
 
 // A product without a usable image (or whose image fails to load) shows a neutral icon instead of a broken image.
 function imageOrPlaceholder(imageUrl) {
-    const placeholder = () => el("div", { className: "product-img product-img-placeholder" }, [el("i", { className: "bi bi-image" })]);
+    const placeholder = () =>
+        el("div", { className: "product-img product-img-placeholder" }, [el("i", { className: "bi bi-image" })]);
     if (!imageUrl) return placeholder();
 
     const image = el("img", { className: "product-img", attrs: { src: imageUrl, loading: "lazy", alt: "" } });
@@ -60,8 +65,14 @@ function buildProductCard(p) {
         imageOrPlaceholder(imageUrl),
         el("div", { className: "p-3 d-flex flex-column flex-grow-1" }, [
             el("div", { className: "d-flex justify-content-between align-items-center mb-1" }, [
-                el("h3", { className: "product-title h6 mb-0 fw-bold text-white text-truncate", text: String(p.name ?? "") }),
-                el("span", { className: "product-price text-primary fw-bold", text: formatPrice(p.price, getLanguage()) })
+                el("h3", {
+                    className: "product-title h6 mb-0 fw-bold text-white text-truncate",
+                    text: String(p.name ?? "")
+                }),
+                el("span", {
+                    className: "product-price text-primary fw-bold",
+                    text: formatPrice(p.price, getLanguage())
+                })
             ]),
             el("p", { className: "product-desc", text: p.description || t("card.noDescription") }),
             el("div", { className: "mt-auto d-flex gap-2" }, [
@@ -121,8 +132,14 @@ export function initProductList(callbacks) {
         currentPage = 0;
         renderProducts();
     });
-    previousButton.addEventListener("click", () => { currentPage--; renderProducts(); });
-    nextButton.addEventListener("click", () => { currentPage++; renderProducts(); });
+    previousButton.addEventListener("click", () => {
+        currentPage--;
+        renderProducts();
+    });
+    nextButton.addEventListener("click", () => {
+        currentPage++;
+        renderProducts();
+    });
     onLanguageChange(renderProducts);
 }
 

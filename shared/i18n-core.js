@@ -20,7 +20,9 @@ export function intlLocale(language) {
 
 /** Replaces {name} in a text with params.name; an unknown {name} is left as it is. */
 export function interpolate(template, params = {}) {
-    return template.replace(/\{(\w+)\}/g, (placeholder, name) => (Object.hasOwn(params, name) ? String(params[name]) : placeholder));
+    return template.replace(/\{(\w+)\}/g, (placeholder, name) =>
+        Object.hasOwn(params, name) ? String(params[name]) : placeholder
+    );
 }
 
 /** The text for a key. With params.count === 1 the singular variant "key.one" is used when the dictionary has one. */
@@ -38,10 +40,13 @@ export function translate(dictionary, key, params = {}) {
 export function translateParts(dictionary, key, params = {}) {
     const template = translate(dictionary, key, { count: params.count });
     if (template === key) return [key];
-    return template.split(/(\{\w+\})/).filter((piece) => piece !== "").map((piece) => {
-        const match = /^\{(\w+)\}$/.exec(piece);
-        if (!match || !Object.hasOwn(params, match[1])) return piece;
-        const value = params[match[1]];
-        return typeof value === "object" && value !== null ? value : String(value);
-    });
+    return template
+        .split(/(\{\w+\})/)
+        .filter((piece) => piece !== "")
+        .map((piece) => {
+            const match = /^\{(\w+)\}$/.exec(piece);
+            if (!match || !Object.hasOwn(params, match[1])) return piece;
+            const value = params[match[1]];
+            return typeof value === "object" && value !== null ? value : String(value);
+        });
 }

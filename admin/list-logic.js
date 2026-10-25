@@ -3,7 +3,11 @@
 /** Products whose name contains `term`, ignoring case the Turkish way (İ/i, I/ı). */
 export function filterProductsByName(products, term) {
     const needle = String(term ?? "").toLocaleLowerCase("tr");
-    return products.filter((p) => String(p.name ?? "").toLocaleLowerCase("tr").includes(needle));
+    return products.filter((p) =>
+        String(p.name ?? "")
+            .toLocaleLowerCase("tr")
+            .includes(needle)
+    );
 }
 
 /**
