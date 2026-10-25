@@ -15,6 +15,7 @@
       "CLAUDE.md",
       "tests/**",
       "e2e/**",
+      "docs/**",
       "scripts/**",
       "*.config.js",
       "*.rules"

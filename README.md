@@ -1,251 +1,197 @@
-![JavaScript](https://img.shields.io/badge/JavaScript-yellow?style=for-the-badge&logo=javascript)
-![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.8-purple?style=for-the-badge&logo=bootstrap)
-![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%26%20Storage-orange?style=for-the-badge&logo=firebase)
-![License](https://img.shields.io/badge/license-Apache%202.0-lightgrey?style=for-the-badge)
+[![CI](https://github.com/Cosmosprey/QrCodeUrunBilgi/actions/workflows/ci.yml/badge.svg)](https://github.com/Cosmosprey/QrCodeUrunBilgi/actions/workflows/ci.yml)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES%20modules-yellow?logo=javascript)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.8-purple?logo=bootstrap)
+![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%26%20Storage-orange?logo=firebase)
+![License](https://img.shields.io/badge/license-Apache%202.0-lightgrey)
 
-# QR E-Commerce
+# QR Product Information System
 
+A QR code based product information system. An administrator manages products in a web panel and prints a QR code for each of them. A customer scans the code with a phone and sees a mobile product page: price, stock, use-by / best-before date and, when the date is close or has passed, a demonstration discount coupon.
 
-A QR code-based product information system developed as a web project.
+It is a small, dependency-light project: **vanilla JavaScript** (plain ES modules, no framework, no build step), **Firebase** as the only backend (Firestore, Storage, Authentication), the interface in **Turkish and English**, and an automated test suite that runs on every pull request.
 
-The project allows an administrator to manage products through a web-based admin panel and provides a customer-facing product page that can be accessed directly through a QR code assigned to each product.
+<p align="center">
+  <img src="docs/screenshots/admin-panel.png" alt="Admin panel with product cards and the add-product form" width="720">
+</p>
 
-The main goal of the project is to provide quick access to dynamic product information while keeping the system simple, modular, and easy to use.
+<p align="center">
+  <img src="docs/screenshots/customer-discount-en.png" alt="Customer page in English: discounted price and coupon" width="220">
+  &nbsp;
+  <img src="docs/screenshots/customer-discount-tr.png" alt="The same customer page in Turkish" width="220">
+  &nbsp;
+  <img src="docs/screenshots/customer-tett-en.png" alt="Customer page of a product whose best-before date has passed" width="220">
+</p>
 
-> **Note on Language:** The repository and documentation are written in English. The application's user interface is available in **Turkish and English**: a TR / EN switch sits on the login screen, in the admin panel and on the customer page. The first visit follows the browser language (Turkish for Turkish browsers, English for any other), and the choice is remembered in the browser. Prices and dates follow the language (`39,90 ₺` / `₺39.90`), while the SKT / TETT terms and the product data stay as they were entered.
+> Product names and descriptions are data that a shop enters, so they are shown exactly as entered and are not translated. The screenshots use English example products for the English pages and a Turkish one for the Turkish page.
+
+---
+
+## Contents
+
+- [How it works](#how-it-works)
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Quick start (no Firebase account needed)](#quick-start-no-firebase-account-needed)
+- [Using your own Firebase project](#using-your-own-firebase-project)
+- [Tests and code quality](#tests-and-code-quality)
+- [Security](#security)
+- [Project structure](#project-structure)
+- [Technologies](#technologies)
+- [Scope and limitations](#scope-and-limitations)
+- [AI assistance](#ai-assistance)
+- [License](#license)
+
+---
+
+## How it works
+
+```text
+Admin creates a product  →  it is stored in Firestore  →  Firestore generates a document ID
+        →  the ID is added to the product URL  →  a QR code is generated from that URL
+        →  a customer scans the code  →  the product page reads the ID from the URL
+        →  the product is loaded from Firestore and displayed
+```
+
+The QR code contains only the address `SITE_ADDRESS/product/product.html?id=PRODUCT_ID`, not the product information. A change made in the admin panel (price, stock, date) therefore shows on the customer page immediately, and the printed code never has to be replaced.
+
+There is no custom server. The pages are static files; they talk to Firebase directly, and what each visitor may do is decided by the Firebase security rules (see [Security](#security)):
+
+- **Customer page** (`product/product.html`): anyone may read a single product. It loads only the Firebase app and Firestore code.
+- **Admin panel** (`admin/admin.html`): signing in with a username and password (Firebase Authentication) is required; only that one admin account may list, create, change or delete products and upload images.
+
 ---
 
 ## Features
 
-### Admin Panel
+### Admin panel
 
-The admin panel provides a single-page interface for managing products.
-
-- Add new products
-- Edit existing products
-- Delete products
-- Search products by name
-- Paginate product cards
-- Upload product images (photos up to 25 MB are accepted and shrunk in the browser before upload: longest side 1200 px, WebP; small pictures and GIFs are uploaded as they are)
-- Display uploaded product images
-- Generate QR codes for products, download them as PNG or print them
+- Add, edit and delete products; search by name; paging
+- Product image upload. Photos up to 25 MB are accepted and shrunk in the browser before upload (longest side 1200 px, WebP, EXIF rotation applied, transparency kept); small pictures and GIFs are uploaded as they are
+- QR code window: shows the product, its price and the code, downloads it as PNG and prints it (only name, price, code and address are printed)
+- Shop-wide **site address** setting for the QR codes, stored in Firestore so every device agrees
 - Works on phones and tablets (the form moves above the list)
-- Accessible: every field has a label, buttons have names, the QR window works with the keyboard and screen readers (Tab stays inside, Escape closes), and an automated axe-core scan reports no problems on any screen
-- Feedback: success messages (toasts), a spinner on the save and login buttons, and "loading", "no products yet" and "no results" messages in the list
-- Manage product categories
-- Manage product prices
-- Manage product descriptions
-- Manage stock quantities
-- Define expiry date information
-- Select between SKT (Son Kullanma Tarihi) and TETT (Tavsiye Edilen Tüketim Tarihi)
-- Display the last price update date
-- Display stock status according to stock quantity
+- Feedback: toasts for saved / updated / deleted, a spinner on busy buttons, and "loading", "no products yet" and "no results" messages
 
-<p align="center">
-<img width="%55" style="vertical-align: middle;margin-right: 10px;" alt="admin_panel" src="https://github.com/user-attachments/assets/99fa4e4d-1578-46c1-a848-77a5924aa067"/>
-</p>
+### Customer page
 
-### Customer Product Page
+- Product image (a neutral icon when it is missing or fails to load), name, category, description, price and the date the price last changed
+- Stock status: in stock, critical stock ("only 7 left") or out of stock
+- SKT / TETT date with the days left
+- Expiry-based discount and coupon (demonstration only)
+- Designed for phones; long names and descriptions wrap instead of widening the page
 
-The customer-facing page is designed to be accessed through a product-specific QR code.
+### Stock status
 
-The product ID is included in the URL and is used to retrieve the corresponding product information.
+Stock is stored as a number and shown as a status on both pages:
 
-The page can display:
+- **More than 10:** in stock
+- **1-10:** critical stock
+- **0:** out of stock
 
-- Product image
-- Product name
-- Product price
-- Product category
-- Product description
-- Current stock status
-- Expiry date information
-- SKT / TETT information
-- Remaining days until the specified date
-- Last price update date
+The limit is `lowStockLimit` in `shared/store-config.js`.
 
-The customer page is designed primarily for mobile use, since the main access method is scanning a QR code with a smartphone.
+### SKT / TETT
 
-<p align="center">
-  <img width="%25" style="vertical-align:middle;" alt="product_page" src="https://github.com/user-attachments/assets/1e3a552d-ca5d-4c4d-9d3a-a82087357f30" />
-</p>
+A product stores one of two date types:
 
----
+- **SKT** - *Son Kullanma Tarihi* (use-by date)
+- **TETT** - *Tavsiye Edilen Tüketim Tarihi* (best-before date)
 
-## Additional Product Features
+Days are counted as whole calendar days in the visitor's local time, and the date itself is still valid: on the expiry day the page says "last day", and from the next day "expired". The result does not depend on the time of day or the time zone.
 
-The project includes several features designed to provide more meaningful information than a simple static product page.
+When adding a **new** product, an SKT date in the past is rejected (an expired product must not be put on sale). A TETT date in the past is allowed, because the TETT discount is meant for exactly those products. Editing an existing product is never blocked by its date.
 
-### Stock Status
-
-Stock quantity is stored as a numerical value and is converted into a visual status on both the admin and customer sides.
-
-- **More than 10:** Stock available
-- **1–10:** Critical stock
-- **0:** Out of stock
-
-The limit of 10 can be changed in `shared/store-config.js`.
-
-The customer-facing page uses different visual indicators depending on the current stock level.
-
-### SKT / TETT Support
-
-Products can store either:
-
-- **SKT** — Son Kullanma Tarihi
-- **TETT** — Tavsiye Edilen Tüketim Tarihi
-
-The customer page calculates the remaining time and presents the corresponding information dynamically.
-
-Days are counted as whole calendar days in the visitor's local time, and the date itself is still valid: on the expiry day the page says "Bugün son gün" (last day), and from the next day "Tarihi Geçti" (expired). The result does not depend on the time of day or the time zone.
-
-When adding a **new** product, an SKT date in the past is rejected (an expired product must not be put on sale), while a TETT date in the past is allowed, because the TETT discount is meant for exactly those products. Editing an existing product is never blocked by its date.
-
-### Expiry-Based Discount
-
-The customer page contains an additional demonstration feature based on the product's date information.
-
-Depending on the selected date type and remaining time, eligible products can display a discounted price and a promotional coupon:
+### Expiry-based discount (demonstration)
 
 - **SKT:** during the last 3 days, including the expiry day. Expired SKT products get no discount.
 - **TETT:** once the recommended date has passed.
 - Products without a date get no discount.
 
-The rate (20 %), the 3-day window, the coupon code (`KAZAN20`) and the on/off switch live in `shared/store-config.js`. Prices are rounded to whole kuruş.
+The rate (20 %), the 3-day window, the coupon code (`KAZAN20`) and the on/off switch are in `shared/store-config.js`. Prices are rounded to whole kuruş. The coupon is only displayed: there is no checkout, and the page says so.
 
-This feature was implemented as a project-specific concept rather than as a complete real-world payment or coupon infrastructure.
+### Price update date
 
-### Price Update Information
+The date the price last **changed** is stored and shown. Saving other fields (for example the stock) does not change it.
 
-The system stores the date on which the product price last **changed** and displays this information on the customer-facing page. Saving other fields (for example the stock) does not change it.
+### Languages
 
-### QR Code Generation
+The interface is available in **Turkish and English**. A TR / EN switch sits on the login screen, in the admin panel and on the customer page. The first visit follows the browser language (Turkish for Turkish browsers, English for any other) and the choice is remembered in the browser. Prices and dates follow the language (`39,90 ₺` / `₺39.90`). The SKT / TETT terms and the product data stay as they were entered; the stored category names stay Turkish and are only labelled in the current language.
 
-Each product can have a QR code generated from its product-specific URL.
+### Accessibility
 
-The generated URL follows the general structure:
+Every field has a label, icon buttons have names, headings and landmarks are in order, text has at least 4.5:1 contrast, and the QR window is a proper dialog: focus moves into it, Tab stays inside, Escape closes it, and focus returns to the button that opened it. An automated axe-core scan reports no problems on any screen in either language.
 
-`SITE_ADDRESS/product/product.html?id=PRODUCT_ID`
+### QR site address (local network and phones)
 
-The QR window shows the product name, price and the code, and offers **PNG indir** (download the code as an image) and **Yazdır** (print: only the name, price, code and address are printed).
-
-**Site address (local network and mobile testing):**  
-`SITE_ADDRESS` is the address customers reach the pages at. It is set in the QR window itself ("Site adresi") and saved in Firestore (`settings/site`, readable and writable only by the admin), so it is the same on every device. Until one is saved, the address the admin page was opened from is used. When that is `localhost` or `127.0.0.1`, the window warns you: a smartphone cannot reach those addresses, so enter your computer's network address instead (e.g. `http://192.168.1.20:5000`) and press **Kaydet**. Existing QR codes already printed with another address keep pointing to it; only newly shown codes use the new one.
-
-When the QR code is scanned, the product ID is read from the URL and the corresponding product information is loaded dynamically.
+`SITE_ADDRESS` is the address customers reach the pages at. It is set in the QR window ("Site address") and saved in Firestore (`settings/site`, readable and writable only by the admin). Until one is saved, the address the admin page was opened from is used. When that is `localhost` or `127.0.0.1`, the window warns you: a phone cannot reach those addresses, so enter your computer's network address instead (for example `http://192.168.1.20:5000`) and press **Save**. Codes printed earlier keep pointing at their old address; only newly shown codes use the new one.
 
 ---
 
-## Technologies
+## Screenshots
 
-### Frontend
+The images below are generated by `npm run screenshots` (see [Regenerating the screenshots](#regenerating-the-screenshots)).
 
-- HTML5
-- CSS3
-- Vanilla JavaScript
-- Bootstrap
-- Bootstrap Icons
+### Admin panel
 
-The project does not use a frontend framework such as React, Vue, or Angular.
+| Sign-in | QR window |
+| :---: | :---: |
+| <img src="docs/screenshots/admin-login.png" alt="Sign-in screen" width="420"> | <img src="docs/screenshots/admin-qr.png" alt="QR window with the site address, PNG download and print" width="420"> |
 
-The interface is built using standard HTML, CSS, and JavaScript to keep the project lightweight and straightforward.
+<p align="center">
+  <img src="docs/screenshots/admin-mobile.png" alt="Admin panel on a phone: product cards in one column" width="240">
+  <br>
+  <em>The admin panel on a phone</em>
+</p>
 
-### Backend / Data Layer
+### Customer page
 
-The project uses Firebase services for data storage and image storage.
-
-- Firebase Firestore
-- Firebase Storage
-
-Firestore is used for product data, while Firebase Storage is used for product images.
-
-There is no custom backend server or traditional SQL database in the current implementation.
-
-### QR Code
-
-- EasyQRCodeJS 4.6.2 (MIT), included in the repository under `assets/js/vendor/`, so no CDN is needed for QR codes
-
-QR codes are generated dynamically from product-specific URLs.
+<p align="center">
+  <img src="docs/screenshots/customer-en.png" alt="Customer page of a product without a discount" width="240">
+  &nbsp;
+  <img src="docs/screenshots/customer-discount-en.png" alt="Customer page with a discount and critical stock" width="240">
+  &nbsp;
+  <img src="docs/screenshots/customer-tett-en.png" alt="Customer page with a best-before date that has passed" width="240">
+</p>
 
 ---
 
-## Project Structure
+## Quick start (no Firebase account needed)
 
-The project is separated into two main user-facing areas:
+The Firebase Emulator Suite stands in for a real Firebase project, so you can try everything locally. You need **Node.js 24.12 or newer** and **Java** (the emulators are Java programs). The web pages themselves need no Node.js at all.
 
-* `admin/` — Product management interface. `admin_script.js` only wires small modules together: `auth-ui.js` (login), `product-list.js` (cards, search, paging, delete), `product-form.js` (add / edit), `qr-modal.js` (QR window: address, download, print), `site-settings.js` (the saved site address), plus helpers for image upload and the pure list and QR logic.
-* `product/` — Customer-facing product page
+```bash
+git clone https://github.com/Cosmosprey/QrCodeUrunBilgi.git
+cd QrCodeUrunBilgi
+npm install
+cp shared/firebase-config.example.js shared/firebase-config.js
+```
 
-* `shared/` — Code used by both areas (Firebase initialisation and configuration, safe DOM helpers, the pure date / stock / discount logic, the store settings, and the language support: `i18n.js`, `i18n-core.js` and the two dictionaries in `locales/`)
+In `shared/firebase-config.js` set `projectId` to `demo-qr-product-info` and `useEmulator` to `true` (the other values can be any text). Then:
 
-Shared frontend resources are stored under `assets/`: one stylesheet per page (`css/admin.css`, `css/product.css`) next to Bootstrap and Bootstrap Icons, and the QR library under `js/vendor/`.
+```bash
+npm run emulators      # terminal 1: Firestore, Storage, Auth and a web server on http://localhost:5000
+npm run seed           # terminal 2: creates the development admin
+```
 
-Both pages carry a Content Security Policy (`<meta>` tag) that only allows scripts from the page's own files and `www.gstatic.com` (the Firebase SDK). The pages contain no inline scripts or event handlers.
+Open <http://localhost:5000/admin/admin.html> and sign in with username `admin` and password `admin123`. Add a product, press its QR button, and open the address shown under the code to see the customer page. Emulator data is kept in memory and is lost when the emulators stop (run `npm run seed` again after a restart).
+
+To scan the code with a phone, put the phone on the same network and enter your computer's network address in the QR window (see [QR site address](#qr-site-address-local-network-and-phones)).
 
 ---
 
-## Firebase Setup
+## Using your own Firebase project
 
-Firebase configuration is intentionally not included in this repository.
-
-To use the project with Firebase, create your own Firebase project and configure Firestore and Firebase Storage.
-
-Copy the example configuration file and fill it in:
+Firebase configuration is intentionally not included in this repository. Create a Firebase project with **Cloud Firestore**, **Cloud Storage** and **Authentication** (Email/Password provider), then copy the example configuration and fill it in:
 
 ```bash
 cp shared/firebase-config.example.js shared/firebase-config.js
 ```
 
-`shared/firebase-config.js` is git-ignored, so your project settings are never committed. It exports the standard Firebase configuration object:
+`shared/firebase-config.js` is git-ignored, so your project settings are never committed. Replace the empty values of `firebaseConfig` with the web app settings of your project (Firebase Console → Project settings → Your apps) and leave `useEmulator` at `false`.
 
-```javascript
-export const firebaseConfig = {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
-};
-```
+The pages are static files: serve the folder with any static web server (the emulator's hosting on port 5000, the Live Server extension of VS Code, `python3 -m http.server`, ...) and open `admin/admin.html`. Customer pages are `product/product.html?id=PRODUCT_ID`.
 
-Replace the empty values with the configuration values from your own Firebase project.
-
-### Developing without a Firebase project
-
-The Firebase Emulator Suite can stand in for a real project (requires Node.js 24.12 or newer, which is the current LTS line, and Java). The web pages themselves need no Node.js at all, only the emulators and the tests do:
-
-```bash
-npm install
-npm run emulators
-```
-
-In `shared/firebase-config.js` set `projectId` to `demo-qr-product-info` and `useEmulator` to `true`. In a second terminal run `npm run seed`, which creates the development admin (username `admin`, password `admin123`). Then open `http://localhost:5000/admin/admin.html` and sign in. Emulator data is kept in memory and is lost when the emulators stop (run the seed command again after a restart).
-
-### Tests and code quality
-
-```bash
-npm test               # unit tests + security rules tests (starts the Firestore and Storage emulators)
-npm run test:unit      # only the unit tests; no emulator needed
-npm run test:e2e       # browser tests (see below)
-npm run lint           # ESLint
-npm run format:check   # Prettier (npm run format fixes the files)
-```
-
-* `npm test` runs the security rules tests (who may read, write and upload what, and which invalid data is rejected) together with the unit tests in `tests/`. It needs Node.js 24.12 or newer and Java.
-* `npm run test:e2e` starts the emulators and opens the admin panel and the customer page in Chromium with [Playwright](https://playwright.dev): signing in, adding / editing / deleting products, the QR window, the discount texts, the Turkish / English switch, photo shrinking and an automatic accessibility scan (axe-core) of every screen. Every test also fails on uncaught errors and on Content Security Policy violations. The first time, install the browser with `npx playwright install chromium`. The tests only ever talk to the emulators: they stop if `shared/firebase-config.js` points at a real project.
-* ESLint finds mistakes (unused variables, `==`, ...) and enforces the project's security rule: HTML strings are never assigned (`innerHTML`, `insertAdjacentHTML`, ...). Prettier formats the JavaScript and the two page stylesheets.
-* [GitHub Actions](.github/workflows/ci.yml) runs lint, the format check, `npm test` and the browser tests on every pull request and every push to `main`.
-
-### Required Firebase Services
-
-The current project uses:
-
-* **Cloud Firestore** for product data
-* **Cloud Storage** for product images
-* **Authentication** (Email/Password provider) for the admin login
-
-### Setting Up the Admin Account and Security Rules
+### Admin account and security rules
 
 Only one admin account may change data. Everyone else can only open a single product page.
 
@@ -256,199 +202,109 @@ Only one admin account may change data. Everyone else can only open a single pro
 
 Until step 3 is done, nobody is an admin and every write is denied. This is deliberate: Firebase assigns random UIDs, so nobody can sign up as `dev-admin-uid` on a real project.
 
-What the rules enforce:
+### Data model
 
-* Anyone may read a single product (this is what the QR code opens), but only the admin may list, create, change or delete products.
-* A product must have exactly the fields in the table below, with sane types and sizes (name 2–70 characters, price above 0, whole-number stock, dates as `YYYY-MM-DD`, `SKT` or `TETT`, image URL starting with `http(s)://`).
-* Only the admin may upload images; the stored file must be JPEG, PNG, WebP or GIF and at most 2 MB (SVG is rejected on purpose, it can carry scripts). The admin panel shrinks big photos before uploading, so a phone photo of several megabytes becomes a few hundred KB and fits easily.
-* The only other document is `settings/site` (the QR site address): the admin can read and write it, nobody else, and it must be an `http(s)://` address.
+The application uses a Firestore collection named `products`. Each document has exactly these fields; the rules reject anything else:
 
-The application expects a Firestore collection named:
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `name` | string | Product name (2-70 characters) |
+| `price` | number | Original price (above 0) |
+| `category` | string | Category name (`Yiyecek`, `İçecek` or `Temizlik Malzemeleri` in the admin form) |
+| `description` | string | Detailed product info |
+| `dateType` | string | `"SKT"` or `"TETT"` |
+| `lastUseDate` | string | `YYYY-MM-DD` (may be empty) |
+| `image` | string | Image URL starting with `http(s)://` (may be empty) |
+| `stockCount` | number | Whole-number inventory count |
+| `priceLastUpdate` | string | `YYYY-MM-DD` |
 
-```text
-products
+The document ID is generated by Firestore and is used as the product identifier in the QR code URL. The only other document is `settings/site` (the QR site address).
+
+---
+
+## Tests and code quality
+
+```bash
+npm test               # unit tests + security rules tests (starts the Firestore and Storage emulators)
+npm run test:unit      # only the unit tests; no emulator needed
+npm run test:e2e       # browser tests with Playwright (starts the emulators itself)
+npm run lint           # ESLint
+npm run format:check   # Prettier (npm run format fixes the files)
 ```
 
-Each document in the `products` collection strictly expects the following data types:
+- **Unit tests** (`tests/`, `node:test`): the pure logic (dates in four time zones, stock, discount, prices, QR addresses, image sizes, the translation dictionaries) and the **security rules**, which are tested against the Firestore and Storage emulators: who may read, write and upload what, and which invalid data is rejected.
+- **Browser tests** (`e2e/`, [Playwright](https://playwright.dev)): they open the admin panel and the customer page in Chromium and use them like a person would: signing in, adding / editing / deleting products, the QR window and its keyboard behaviour, the discount texts, the language switch, photo shrinking, and an automatic accessibility scan (axe-core) of every screen in both languages. Every test also fails on uncaught page errors and Content Security Policy violations. The first time, install the browser with `npx playwright install chromium`. The tests only ever talk to the emulators: they stop if `shared/firebase-config.js` points at a real project.
+- **ESLint** finds mistakes (unused variables, `==`, ...) and enforces the project's security rule: HTML strings are never assigned (`innerHTML`, `insertAdjacentHTML`, ...). **Prettier** formats the JavaScript and the two page stylesheets.
+- **[GitHub Actions](.github/workflows/ci.yml)** runs lint, the format check, `npm test` and the browser tests on every pull request and every push to `main`. Dependabot proposes updates of the Actions once a month.
 
-| Field Name | JavaScript Type | Firestore Type | Description |
-| :--- | :--- | :--- | :--- |
-| `name` | `string` | `string` | Product name |
-| `price` | `Number` | `int64 for integers`<br>`double for decimals` | Original price |
-| `category` | `string` | `string` | Category name |
-| `description` | `string` | `string` | Detailed product info |
-| `dateType` | `string` | `string` | `"SKT"` or `"TETT"` |
-| `lastUseDate` | `string` | `string` | Format: `YYYY-MM-DD` |
-| `image` | `string` | `string` | Firebase Storage Image URL |
-| `stockCount` | `Number` | `int64` | Inventory count |
-| `priceLastUpdate` | `string` | `string` | Format: `YYYY-MM-DD` |
+### Regenerating the screenshots
 
-The exact document ID is generated by Firestore and is used as the product identifier in QR code URLs.
-
----
-
-## Running the Project
-
-The project is a client-side web application and does not require a custom backend server.
-
-For local development, serve the project using a local web server rather than opening the HTML files directly.
-
-For example, the project can be run using the Live Server extension in Visual Studio Code.
-
-After configuring Firebase, open:
-
-```text
-admin/admin.html
-```
-to access the administration panel.
-
-Customer product pages can be accessed using:
-
-```text
-product/product.html?id=PRODUCT_ID
+```bash
+npm run screenshots
 ```
 
+starts the emulators, fills them with a few made-up products (their pictures are small drawings made by the script, so no photo rights are involved), fixes the clock to one day and takes the pictures in `docs/screenshots/`. Run it again after changing the interface to keep the README up to date.
+
 ---
 
-## QR Code Workflow
+## Security
 
-The general workflow is:
+- **Access control is enforced by Firebase, not by the pages.** The admin panel requires a login, and the Firestore and Storage rules (`firestore.rules`, `storage.rules`) only let the admin account change data.
+- **The rules validate the data**, not only the form: exact field set, types, sizes, date formats and `http(s)` image URLs. Only the admin may upload images; the stored file must be JPEG, PNG, WebP or GIF and at most 2 MB (SVG is rejected on purpose, it can carry scripts). The admin panel shrinks big photos before uploading, so a phone photo of several megabytes becomes a few hundred KB and fits easily.
+- **Anyone may read a single product** (that is what the QR code opens), but only the admin may list, create, change or delete products. `settings/site` can be read and written by the admin only.
+- **No HTML injection:** the pages never put product data into `innerHTML`; it is always inserted as plain text, and ESLint fails the build if code assigns HTML strings.
+- **Content Security Policy:** both pages only allow scripts from their own files and `www.gstatic.com` (the Firebase SDK). There are no inline scripts or inline event handlers, and the libraries (Bootstrap, Bootstrap Icons, the QR library) are included in the repository instead of being loaded from a CDN.
+- **Configuration:** Firebase credentials are not in the repository. The Firebase web configuration (API key and project id) is not a secret by itself, because every visitor can see it. What protects the data is the login and the rules, so publish the rules before exposing the project to a network you do not control.
+
+---
+
+## Project structure
 
 ```text
-Admin creates product
-        ↓
-Product is stored in Firestore
-        ↓
-Firestore generates a document ID
-        ↓
-Product ID is added to the product URL
-        ↓
-QR code is generated from the URL
-        ↓
-Customer scans the QR code
-        ↓
-Product page reads the ID from the URL
-        ↓
-Product data is retrieved from Firestore
-        ↓
-Product information is displayed
+admin/        Admin panel. admin_script.js only wires small modules together: auth-ui (login), product-list
+              (cards, search, paging, delete), product-form (add / edit), qr-modal (QR window), site-settings
+              (the saved site address), product-images and image-convert (upload and shrinking), plus pure helpers
+product/      Customer product page
+shared/       Code used by both pages: Firebase initialisation, safe DOM helpers, the pure date / stock / discount
+              logic (product-logic.js), the store settings (store-config.js), and the language support
+              (i18n.js, i18n-core.js and the two dictionaries in locales/)
+assets/       Bootstrap, Bootstrap Icons, the QR library (js/vendor/) and one stylesheet per page
+tests/        Unit tests and security rules tests (node:test)
+e2e/          Browser tests (Playwright)
+scripts/      Development helpers: emulator seed, screenshot generator
+docs/         The README screenshots
+.github/      CI workflow and Dependabot settings
+firestore.rules, storage.rules   Security rules
 ```
 
-This allows the QR code to point to a dynamic product record instead of containing the product information itself.
+---
 
-Therefore, changes made to a product can be reflected on the customer page without generating a completely new QR code, as long as the product document ID remains the same.
+## Technologies
+
+- HTML5, CSS3 and **vanilla JavaScript** (ES modules); no framework and no build step
+- Bootstrap 5.3.8 and Bootstrap Icons 1.13.2 (included in the repository)
+- Firebase Firestore, Storage and Authentication (the web SDK is loaded from Google's CDN at a fixed version that a test keeps equal to the development dependency)
+- EasyQRCodeJS 4.6.2 (MIT), included under `assets/js/vendor/`, so no CDN is needed for QR codes
+- Development only: Firebase emulators, `node:test`, Playwright with axe-core, ESLint, Prettier, GitHub Actions
+
+`package.json` contains development tools only; the project has no runtime dependencies.
 
 ---
 
-## Design Approach
+## Scope and limitations
 
-The project uses separate visual structures for the administration and customer interfaces.
+This is a hobby and portfolio project, meant to be downloaded and run on a local network with your own Firebase project. It is not deployed anywhere.
 
-### Admin Interface
-
-The admin panel is designed primarily for desktop use.
-
-Its main design goal is to make product management possible from a single page.
-
-The interface uses:
-
-* Product cards
-* Inline edit/delete actions
-* A single product form for both adding and editing
-* Search
-* Pagination
-* QR code generation
-
-Instead of opening separate pages for every operation, the same interface is reused for product creation and editing.
-
-### Customer Interface
-
-The customer page is designed primarily for mobile devices.
-
-The design focuses on:
-
-* Clear product information
-* Large product imagery
-* Simple navigation
-* Visible stock information
-* Clear price presentation
-* Expiry-date information
-* QR-code-oriented access
+- It supports a single admin account.
+- Prices are in Turkish lira (₺) in both languages: the language changes how a price is written (`39,90 ₺` / `₺39.90`), not the currency.
+- The discount is a demonstration: there is no checkout, payment or coupon validation.
+- The tests and the CI run against the Firebase emulators and in Chromium. The project has not been verified in this repository against a real Firebase project, or in Firefox or Safari.
 
 ---
 
-## Security and Configuration
+## AI assistance
 
-Firebase credentials are not included in this repository.
-
-The repository contains a Firebase configuration template so that users can connect the application to their own Firebase project.
-
-Access control is enforced by Firebase itself, not by the web pages: the admin panel requires a login, and the Firestore and Storage security rules (`firestore.rules`, `storage.rules`) only let the admin account change data. See *Setting Up the Admin Account and Security Rules* above. The pages never put product data into `innerHTML`; it is always inserted as plain text.
-
-The Firebase web configuration (API key and project id) is not a secret by itself, because it is visible to every visitor. What protects the data is the login and the rules, so make sure the rules are published before exposing the project to a network you do not control.
-
-The current repository is intended primarily as a project, demonstration, and development template.
-
----
-
-## Current Project Status
-
-The core functionality of the project has been implemented.
-
-### Completed
-
-* Admin product management
-* Admin login (Firebase Authentication)
-* Firestore and Storage security rules with data validation, covered by automated tests
-* Product creation
-* Product editing
-* Product deletion
-* Product search
-* Product pagination
-* Firebase Firestore integration
-* Firebase Storage image upload
-* Dynamic product page
-* QR code generation
-* QR download (PNG) and printing
-* Configurable site address for QR codes, shared by all devices
-* Product-specific QR URLs
-* Numerical stock management
-* Stock status visualization
-* SKT / TETT support
-* Expiry date calculation
-* Price update date
-* Expiry-based promotional logic
-* Responsive customer interface (long names wrap, a missing image shows a placeholder)
-* Responsive admin panel for phones and tablets
-* Accessibility (labels, landmarks, headings, keyboard-operable dialog, contrast)
-* Toast messages, busy buttons and list status messages
-* Separate admin and customer page structures
-* Local frontend assets (Bootstrap, Bootstrap Icons and the QR library are included; only the Firebase SDK is loaded from Google's CDN)
-
----
-
-## Project Purpose
-
-This project was developed as a practical web development project to explore:
-
-* Client-side web development
-* CRUD operations
-* Cloud databases
-* Cloud file storage
-* Dynamic web pages
-* QR code-based navigation
-* Responsive UI design
-* JavaScript module structure
-* Performance optimization
-* Basic security and deployment considerations
-
-The project focuses on building a functional system with a simple architecture rather than introducing unnecessary backend complexity.
-
----
-
-## AI Assistance
-
-The first version of this project was written with help from a chat-based AI assistant. Later improvements (security, structure, tests and UI) are developed with Claude Code. Design decisions and code review remain with the project owner.
+The first version of this project was written with help from a chat-based AI assistant. Later improvements (security, structure, tests, accessibility, languages, tooling and this documentation) were developed with [Claude Code](https://claude.com/claude-code). Design decisions and code review remain with the project owner.
 
 ---
 

@@ -65,6 +65,37 @@ test("the choice is applied at once, remembered, and wins over the browser langu
     await expect(page.locator("#category")).toHaveText("Beverages");
 });
 
+test.describe("the selected language stands out from the other one", () => {
+    // The selected button is a filled pill, the other one has no background and a fainter text colour.
+    const looks = (button) =>
+        button.evaluate((element) => {
+            const style = getComputedStyle(element);
+            return { background: style.backgroundColor, color: style.color };
+        });
+
+    const check = async (page) => {
+        const selected = await looks(page.locator('[data-lang][aria-pressed="true"]:visible'));
+        const other = await looks(page.locator('[data-lang][aria-pressed="false"]:visible'));
+        expect(selected.background).not.toBe("rgba(0, 0, 0, 0)");
+        expect(other.background).toBe("rgba(0, 0, 0, 0)");
+        expect(selected.color).not.toBe(other.color);
+    };
+
+    test("on the customer page", async ({ page }) => {
+        await page.goto(`/product/product.html?id=${await addProduct()}`);
+        await expect(page.locator("#product-card")).toBeVisible();
+        await check(page);
+        await page.getByRole("button", { name: "EN" }).click();
+        await check(page);
+    });
+
+    test("on the sign-in screen", async ({ page }) => {
+        await page.goto("/admin/admin.html");
+        await expect(page.locator("#login-view")).toBeVisible();
+        await check(page);
+    });
+});
+
 test("an unknown category is shown as it was stored", async ({ page }) => {
     const id = await addProduct({ category: "Oyuncak" });
     await page.goto(`/product/product.html?id=${id}`);
