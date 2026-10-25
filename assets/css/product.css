@@ -195,3 +195,12 @@ body.product-theme {
     color: #94a3b8;
     font-size: 5rem;
 }
+
+/* =========================
+   READABILITY
+========================= */
+
+/* The red of Bootstrap's text-danger is 4.3:1 on the light info box; this one reaches 5.6:1. */
+.product-theme .info-box .text-danger {
+    color: #bb2d3b !important;
+}

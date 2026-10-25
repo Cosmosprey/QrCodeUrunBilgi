@@ -34,7 +34,7 @@ Hobby / portfolio project, meant to be downloaded and run on a local network by 
 
 ```
 admin/      admin panel: admin_script.js only wires modules (auth-ui, product-list, product-form, qr-modal);
-            firebase-admin.js (Auth/Storage), product-images, site-settings (Firestore settings/site), upload/username helpers,
+            firebase-admin.js (Auth/Storage), product-images, site-settings (Firestore settings/site), toast, upload/username helpers,
             list-logic and qr-logic (pure), qr.js (wrapper)
 product/    customer-facing product page
 shared/     code used by both pages (Firebase app + Firestore init, config, safe DOM helpers,
@@ -47,6 +47,15 @@ firestore.rules, storage.rules   security rules (the admin is identified by a UI
 ```
 
 No inline scripts or inline event handlers (`onclick=` etc.): both HTML files carry a Content Security Policy `<meta>` tag (`script-src 'self' https://www.gstatic.com`). Attach events with `addEventListener`. If you add another script host, update the tag in **both** pages. Third-party libraries are vendored under `assets/js/vendor/` (see its README), not loaded from CDNs; the Firebase SDK is the one exception.
+
+Accessibility conventions (a scan with axe-core found 0 problems on every screen after phase 4b-1; keep it that way):
+
+- Every form control has a `<label>`; use Bootstrap's `visually-hidden` label when the design shows only a placeholder. Group radios in a `<fieldset><legend>`.
+- Icon-only buttons get an `aria-label`; decorative icons get `aria-hidden="true"`.
+- Each page has one `<main>` and one visible `<h1>`; keep heading levels in order (use the `.h4` etc. classes to keep the look).
+- Dialogs: `role="dialog"`, `aria-modal`, a name from their title; focus moves in, Tab stays inside, Escape or a click outside closes, the page behind is `inert`, focus returns to the opener (see `admin/qr-modal.js`).
+- Text needs 4.5:1 contrast. The Bootstrap blue and red are too dark/light on this theme, so the admin prices and the customer warning use lighter/darker shades (see the comments in `admin.css` and `product.css`).
+- Success messages are toasts (`admin/toast.js`, a polite live region); problems stay in the alert box next to what failed.
 
 The Firebase SDK is loaded from Google's CDN at a fixed version (the `gstatic.com/firebasejs/<version>/` URLs in `shared/firebase.js` and `admin/firebase-admin.js`). That version must equal the `firebase` dev dependency in `package.json`; `tests/sdk-version.test.js` fails when they drift apart, so update them together. The project is on Firebase 13.x. Its test helper `@firebase/rules-unit-testing` 6 declares Node 24.12 or newer, so `engines` says `>=24.12.0` (the web pages themselves need no Node).
 
@@ -85,9 +94,10 @@ Work proceeds phase by phase, one commit series per phase. Before each phase, de
 - [x] **Phase 2 - Correctness:** pure date/stock/discount functions with `node:test` tests, error handling, fix `priceLastUpdate` (only change when the price changes), discount settings in one config.
 - [x] **Phase 3 - Structure:** remove inline `onclick` handlers and `window.*` assignments, separate the customer page from admin code.
 - [x] **Phase 4a - Usability:** responsive admin (phones/tablets), long names and missing images on the customer page, QR site-address setting (Firestore `settings/site`), QR PNG download and print.
-- [ ] **Phase 4b - Polish:** toasts and loading states, accessibility, image downscaling before upload, TR/EN.
+- [x] **Phase 4b-1 - Accessibility and feedback:** labels and names, landmarks and headings, keyboard-operable QR dialog, contrast, toasts, loading/empty states.
+- [ ] **Phase 4b-2 - Images and languages:** image downscaling before upload, TR/EN.
 - [ ] **Phase 5 - Quality:** ESLint/Prettier, rules tests against the emulator, README and screenshots.
 
 ## Known issues being worked on
 
-See the roadmap above. The most important ones now: form fields have no labels (only placeholders) and the QR window has no keyboard/screen-reader support, photos from a phone are often over the 2 MB upload limit, and there are no success messages or loading indicators (phase 4b).
+See the roadmap above. The most important ones now: photos from a phone are often over the 2 MB upload limit, and the interface is Turkish only (phase 4b-2).

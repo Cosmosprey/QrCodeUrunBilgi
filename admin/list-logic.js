@@ -22,3 +22,14 @@ export function pageInfo(totalItems, requestedPage, perPage) {
         hasNext: start + perPage < totalItems
     };
 }
+
+/**
+ * What the product area should show: "loading" before the first answer, "empty" when there are no
+ * products at all, "no-results" when a search matches nothing, otherwise "list".
+ */
+export function listState({ loaded, total, matching }) {
+    if (!loaded) return "loading";
+    if (total === 0) return "empty";
+    if (matching === 0) return "no-results";
+    return "list";
+}
