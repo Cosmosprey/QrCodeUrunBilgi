@@ -77,6 +77,23 @@ export async function addProduct(overrides = {}) {
     return body.name.split("/").pop();
 }
 
+/** Changes some fields of a stored product straight in the emulator (what another device would have done). */
+export async function updateProductFields(id, fields) {
+    const mask = Object.keys(fields)
+        .map((name) => `updateMask.fieldPaths=${name}`)
+        .join("&");
+    await fetch(`${DOCUMENTS}/products/${id}?${mask}`, {
+        method: "PATCH",
+        headers: HEADERS,
+        body: JSON.stringify({ fields: Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, field(v)])) })
+    });
+}
+
+/** Deletes a stored product straight in the emulator. */
+export async function removeProduct(id) {
+    await fetch(`${DOCUMENTS}/products/${id}`, { method: "DELETE", headers: HEADERS });
+}
+
 /** The stored products as plain objects (with their id), to check what the pages saved. */
 export async function storedProducts() {
     const response = await fetch(`${DOCUMENTS}/products`, { headers: HEADERS });

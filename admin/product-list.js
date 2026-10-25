@@ -146,7 +146,7 @@ export function initProductList(callbacks) {
     onLanguageChange(renderProducts);
 }
 
-export function findProduct(id) {
+function findProduct(id) {
     return products.find((p) => p.id === id);
 }
 

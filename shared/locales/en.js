@@ -71,6 +71,9 @@ export const en = {
     "error.save.imageTooLarge": "The image could not be made small enough. Choose a smaller image.",
     "error.save.imageUnreadable": "The image could not be read. Try another image.",
     "error.save.denied": "You are not allowed to do this, or the data is invalid.",
+    "error.save.conflict":
+        "This product was changed somewhere else. The list was reloaded: check the current values and edit again.",
+    "error.save.gone": "This product no longer exists (it was deleted somewhere else). The list was reloaded.",
     "error.save.failed": "The product could not be saved. Please try again.",
 
     // ---- messages returned by the pure validation functions

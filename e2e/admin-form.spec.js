@@ -7,6 +7,7 @@ import {
     TINY_PNG,
     clearData,
     addProduct,
+    removeProduct,
     storedProducts,
     signIn,
     fillProductForm
@@ -148,4 +149,93 @@ test.describe("text fields", () => {
         await expect(page.locator("#price")).toHaveAttribute("max", "1000000");
         await expect(page.locator("#stockCount")).toHaveAttribute("max", "1000000");
     });
+});
+
+test.describe("a product that was changed somewhere else", () => {
+    test("is not overwritten by an edit that started from the old values", async ({ page, context }) => {
+        await addProduct({ name: "Alpha", price: 10, stockCount: 20, priceLastUpdate: "2026-10-01" });
+        await signIn(page);
+
+        // a second tab (or device) of the same admin
+        const other = await context.newPage();
+        await other.clock.setFixedTime(NOW);
+        await other.goto("/admin/admin.html");
+        await expect(card(other, "Alpha")).toContainText("10,00 ₺");
+
+        await card(page, "Alpha").getByRole("button", { name: "Düzenle" }).click();
+        await page.locator("#price").fill("12");
+        await page.getByRole("button", { name: "GÜNCELLE" }).click();
+        await expect(page.locator(".app-toast")).toHaveText("Ürün güncellendi.");
+
+        // the other tab still shows the old price and now only wants to change the stock
+        await expect(card(other, "Alpha")).toContainText("10,00 ₺");
+        await card(other, "Alpha").getByRole("button", { name: "Düzenle" }).click();
+        await other.locator("#stockCount").fill("19");
+        await other.getByRole("button", { name: "GÜNCELLE" }).click();
+
+        await expect(other.locator("#form-error")).toHaveText(
+            "Bu ürün başka bir yerde değiştirilmiş. Liste yenilendi: güncel değerlere bakıp tekrar düzenleyin."
+        );
+        await expect(card(other, "Alpha")).toContainText("12,00 ₺"); // the list shows what is stored now
+        await expect(other.locator("#form-title")).toHaveText("Ürün Ekle");
+        expect(await storedProducts()).toMatchObject([{ price: 12, stockCount: 20, priceLastUpdate: "2026-10-27" }]);
+
+        // starting again from the stored values works, and the date of the price change stays
+        await card(other, "Alpha").getByRole("button", { name: "Düzenle" }).click();
+        await other.locator("#stockCount").fill("19");
+        await other.getByRole("button", { name: "GÜNCELLE" }).click();
+        await expect(other.locator(".app-toast")).toHaveText("Ürün güncellendi.");
+        expect(await storedProducts()).toMatchObject([{ price: 12, stockCount: 19, priceLastUpdate: "2026-10-27" }]);
+    });
+
+    test("that was deleted says so, and the list is refreshed", async ({ page }) => {
+        const id = await addProduct({ name: "Alpha" });
+        await signIn(page);
+        await card(page, "Alpha").getByRole("button", { name: "Düzenle" }).click();
+
+        await removeProduct(id);
+        await page.locator("#price").fill("12");
+        await page.getByRole("button", { name: "GÜNCELLE" }).click();
+
+        await expect(page.locator("#form-error")).toHaveText(
+            "Bu ürün artık yok (başka bir yerde silinmiş). Liste yenilendi."
+        );
+        await expect(page.getByText("Henüz ürün yok.")).toBeVisible();
+        expect(await storedProducts()).toHaveLength(0); // nothing was created again
+    });
+
+    test("leaves no picture behind that was uploaded for the refused save", async ({ page }) => {
+        const id = await addProduct({ name: "Alpha", image: "" });
+        await signIn(page);
+        await card(page, "Alpha").getByRole("button", { name: "Düzenle" }).click();
+        await page.locator("#imageFile").setInputFiles({ name: "x.png", mimeType: "image/png", buffer: TINY_PNG });
+        const uploads = [];
+        page.on("response", (response) => {
+            if (response.request().method() === "POST" && /:9199\//.test(response.url())) uploads.push(response.url());
+        });
+
+        await removeProduct(id);
+        await page.getByRole("button", { name: "GÜNCELLE" }).click();
+        await expect(page.locator("#form-error")).toContainText("artık yok");
+
+        // the picture was uploaded and then deleted again: its address no longer answers
+        expect(uploads).toHaveLength(1);
+        const upload = new URL(uploads[0]);
+        const object = `${upload.origin}${upload.pathname}/${encodeURIComponent(upload.searchParams.get("name"))}`;
+        await expect.poll(async () => (await fetch(`${object}?alt=media`)).status).toBe(404);
+    });
+});
+
+test("needs no sideways scrolling at 320 px with text twice as big", async ({ page }) => {
+    await addProduct({ name: "A".repeat(70), description: "B".repeat(300), category: "Temizlik Malzemeleri" });
+    await page.setViewportSize({ width: 320, height: 568 });
+    await signIn(page);
+    await expect(page.locator(".product-card")).toHaveCount(1);
+    await page.evaluate(() => {
+        document.documentElement.style.fontSize = "200%";
+    });
+    const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
 });
