@@ -52,7 +52,7 @@ Admin creates a product  →  it is stored in Firestore  →  Firestore generate
         →  the product is loaded from Firestore and displayed
 ```
 
-The QR code contains only the address `SITE_ADDRESS/product/product.html?id=PRODUCT_ID`, not the product information. A change made in the admin panel (price, stock, date) therefore shows on the customer page immediately, and the printed code never has to be replaced.
+The QR code contains only the address `SITE_ADDRESS/product/product.html?id=PRODUCT_ID`, not the product information. A change made in the admin panel (price, stock, date) therefore shows on the customer page the next time it is opened, and the printed code never has to be replaced. A page that stays open reads the product again when the visitor comes back to it (if its data is older than a minute) and at midnight, when the days left and the coupon change; it does not listen for changes while it is in the background.
 
 There is no custom server. The pages are static files; they talk to Firebase directly, and what each visitor may do is decided by the Firebase security rules (see [Security](#security)):
 
@@ -65,11 +65,11 @@ There is no custom server. The pages are static files; they talk to Firebase dir
 
 ### Admin panel
 
-- Add, edit and delete products; search by name; paging. "Edit" brings the form into view and a **Cancel** button leads back; while a save is running no other product can be edited or deleted
+- Add, edit and delete products; search by name; paging. "Edit" brings the form into view and a **Cancel** button leads back; while a save is running no other product can be edited or deleted. If the product was changed or deleted somewhere else meanwhile (another tab or device), the save is refused with a message and the list is reloaded, so nothing is overwritten silently
 - Product image upload. Photos up to 25 MB are accepted and shrunk in the browser before upload (longest side 1200 px, WebP, EXIF rotation applied, transparency kept); small pictures and GIFs are uploaded as they are
 - QR code window: shows the product, its price and the code, downloads it as PNG and prints it (only name, price, code and address are printed)
 - Shop-wide **site address** setting for the QR codes, stored in Firestore so every device agrees
-- Works on phones and tablets (the form moves above the list)
+- Works on phones and tablets (the form moves above the list), also at a plain `http://` network address, where a picture can be uploaded as well
 - Feedback: toasts for saved / updated / deleted, a spinner on busy buttons, and "loading", "no products yet" and "no results" messages
 
 ### Customer page
@@ -78,7 +78,7 @@ There is no custom server. The pages are static files; they talk to Firebase dir
 - Stock status: in stock, critical stock ("only 7 left") or out of stock
 - SKT / TETT date with the days left
 - Expiry-based discount and coupon (demonstration only)
-- Designed for phones; long names and descriptions wrap instead of widening the page
+- Designed for phones; long names and descriptions wrap instead of widening the page, also when the visitor has made the text twice as big
 
 ### Stock status
 

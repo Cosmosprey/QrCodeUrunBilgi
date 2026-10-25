@@ -75,8 +75,13 @@ test("a small picture is stored as it is", async ({ page }) => {
 
     await expect(page.locator(".app-toast")).toHaveText("Ürün kaydedildi.");
     const [stored] = await storedProducts();
-    const storedSize = await page.evaluate(async (url) => (await (await fetch(url)).blob()).size, stored.image);
-    expect(storedSize).toBe(small.length);
+    const storedBase64 = await page.evaluate(async (url) => {
+        const bytes = new Uint8Array(await (await fetch(url)).arrayBuffer());
+        let binary = "";
+        for (const byte of bytes) binary += String.fromCharCode(byte);
+        return btoa(binary);
+    }, stored.image);
+    expect(storedBase64).toBe(small.toString("base64")); // the very same bytes, not just the same size
 });
 
 test("a corrupt file is refused and nothing is saved", async ({ page }) => {

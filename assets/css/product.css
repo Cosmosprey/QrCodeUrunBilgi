@@ -176,9 +176,11 @@ body.product-theme {
    LONG NAMES AND MISSING IMAGE
 ========================= */
 
-/* A long word with no spaces must wrap instead of widening the page. */
-.product-theme #name,
-.product-theme #description {
+/*
+ * A long word with no spaces (a name, a price in large letters) must wrap instead of widening the page. This also
+ * covers a visitor who has made the text twice as big: the spaces around the text (in rem) grow with it.
+ */
+.product-theme .product-content {
     overflow-wrap: anywhere;
 }
 
