@@ -22,7 +22,7 @@ It is a small, dependency-light project: **vanilla JavaScript** (plain ES module
   <img src="docs/screenshots/customer-tett-en.png" alt="Customer page of a product whose best-before date has passed" width="220">
 </p>
 
-> The product names in the screenshots are Turkish because product data is shown exactly as it was entered. Only the interface is translated.
+> Product names and descriptions are data that a shop enters, so they are shown exactly as entered and are not translated. The screenshots use English example products for the English pages and a Turkish one for the Turkish page.
 
 ---
 

@@ -80,67 +80,91 @@ const DRAWINGS = {
 };
 
 // ---- the made-up products. Fixed ids so the list always has the same order.
+// Names and descriptions are data that a shop enters in its own language, so every product has a Turkish and an
+// English version: the English pictures use the English one, the Turkish picture the Turkish one.
 
 const PRODUCTS = [
     {
-        id: "1-zeytinyagi",
-        name: "Zeytinyağı 1 L",
+        id: "1-olive-oil",
         price: 389.9,
         category: "Yiyecek",
-        description: "Soğuk sıkım, naturel sızma zeytinyağı. Serin ve karanlık yerde saklayın.",
         dateType: "SKT",
         lastUseDate: "2027-03-15",
         image: `${IMAGE_HOST}/olive-oil.svg`,
         stockCount: 24,
-        priceLastUpdate: "2026-10-12"
+        priceLastUpdate: "2026-10-12",
+        text: {
+            tr: {
+                name: "Zeytinyağı 1 L",
+                description: "Soğuk sıkım, naturel sızma zeytinyağı. Serin ve karanlık yerde saklayın."
+            },
+            en: {
+                name: "Olive Oil 1 L",
+                description: "Cold-pressed extra virgin olive oil. Store in a cool, dark place."
+            }
+        }
     },
     {
-        id: "2-sut",
-        name: "Süt 1 L",
+        id: "2-milk",
         price: 39.9,
         category: "Yiyecek",
-        description: "Günlük süt, pastörize. Açıldıktan sonra buzdolabında 3 gün içinde tüketin.",
         dateType: "SKT",
         lastUseDate: "2026-10-29",
         image: `${IMAGE_HOST}/milk.svg`,
         stockCount: 7,
-        priceLastUpdate: "2026-10-20"
+        priceLastUpdate: "2026-10-20",
+        text: {
+            tr: {
+                name: "Tam Yağlı Süt 1 L",
+                description: "Günlük süt, pastörize. Açıldıktan sonra buzdolabında 3 gün içinde tüketin."
+            },
+            en: {
+                name: "Whole Milk 1 L",
+                description: "Fresh pasteurised milk. Keep in the fridge and use within 3 days of opening."
+            }
+        }
     },
     {
-        id: "3-ekmek",
-        name: "Taze Ekmek",
+        id: "3-bread",
         price: 12.5,
         category: "Yiyecek",
-        description: "Taş fırında pişmiş köy ekmeği.",
         dateType: "SKT",
         lastUseDate: "2026-10-28",
         image: `${IMAGE_HOST}/bread.svg`,
         stockCount: 0,
-        priceLastUpdate: "2026-09-01"
+        priceLastUpdate: "2026-09-01",
+        text: {
+            tr: { name: "Taze Ekmek", description: "Taş fırında pişmiş köy ekmeği." },
+            en: { name: "Fresh Bread", description: "Stone-baked village loaf." }
+        }
     },
     {
-        id: "4-elma-suyu",
-        name: "Elma Suyu 1 L",
+        id: "4-apple-juice",
         price: 54,
         category: "İçecek",
-        description: "%100 elma suyu, şeker ilavesiz.",
         dateType: "TETT",
         lastUseDate: "2026-09-30",
         image: `${IMAGE_HOST}/apple-juice.svg`,
         stockCount: 40,
-        priceLastUpdate: "2026-08-15"
+        priceLastUpdate: "2026-08-15",
+        text: {
+            tr: { name: "Elma Suyu 1 L", description: "%100 elma suyu, şeker ilavesiz." },
+            en: { name: "Apple Juice 1 L", description: "100% apple juice, no added sugar." }
+        }
     },
     {
-        id: "5-bulasik-deterjani",
-        name: "Sıvı Bulaşık Deterjanı",
+        id: "5-dish-soap",
         price: 89.9,
         category: "Temizlik Malzemeleri",
-        description: "Yağ çözücü formül, 750 ml.",
         dateType: "SKT",
         lastUseDate: "2028-01-10",
         image: `${IMAGE_HOST}/dish-soap.svg`,
         stockCount: 15,
-        priceLastUpdate: "2026-10-05"
+        priceLastUpdate: "2026-10-05",
+        text: {
+            tr: { name: "Sıvı Bulaşık Deterjanı", description: "Yağ çözücü formül, 750 ml." },
+            en: { name: "Dish Soap", description: "Grease-cutting formula, 750 ml." }
+        }
     }
 ];
 
@@ -182,7 +206,12 @@ async function main() {
         await fetch("http://127.0.0.1:8080/emulator/v1/projects/demo-qr-product-info/databases/(default)/documents", {
             method: "DELETE"
         });
-        for (const { id, ...product } of PRODUCTS) await write(`products/${id}`, product);
+        const seedProducts = async (language) => {
+            for (const { id, text, ...product } of PRODUCTS) {
+                await write(`products/${id}`, { ...product, ...text[language] });
+            }
+        };
+        await seedProducts("en");
         await write("settings/site", { siteUrl: "http://192.168.1.20:5000" });
         mkdirSync(OUT, { recursive: true });
 
@@ -220,7 +249,10 @@ async function main() {
         await imagesLoaded(page, "img.product-img");
         await shoot(page, "admin-panel");
 
-        await page.locator(".product-card", { hasText: "Süt 1 L" }).getByRole("button", { name: "Show QR" }).click();
+        await page
+            .locator(".product-card", { hasText: "Whole Milk 1 L" })
+            .getByRole("button", { name: "Show QR" })
+            .click();
         await page.locator("#qrContainer canvas").waitFor();
         await shoot(page, "admin-qr");
         await context.close();
@@ -255,15 +287,18 @@ async function main() {
             await page.locator("#product-card").waitFor();
             await imagesLoaded(page, "#image");
         };
-        await open("1-zeytinyagi");
+        await open("1-olive-oil");
         await shoot(page, "customer-en", { fullPage: true });
-        await open("2-sut");
+        await open("2-milk");
         await shoot(page, "customer-discount-en", { fullPage: true });
+        await open("4-apple-juice");
+        await shoot(page, "customer-tett-en", { fullPage: true });
+
+        // The Turkish picture: the same product as a Turkish shop would have entered it
+        await seedProducts("tr");
+        await open("2-milk");
         await pickLanguage(page, "TR");
         await shoot(page, "customer-discount-tr", { fullPage: true });
-        await pickLanguage(page, "EN");
-        await open("4-elma-suyu");
-        await shoot(page, "customer-tett-en", { fullPage: true });
         await context.close();
     } finally {
         await browser.close();
