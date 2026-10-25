@@ -106,8 +106,17 @@ export async function fillProductForm(page, { name, price, stockCount, lastUseDa
     if (description !== undefined) await page.locator("#description").fill(description);
 }
 
-/** Runs the axe accessibility checker on what is on screen now and returns the violations (none is expected). */
+/**
+ * Runs the axe accessibility checker on what is on screen now and returns the violations (none is expected).
+ * Transitions and animations are switched off first: axe measures the colours it finds at that moment, and halfway
+ * through a button's hover transition they are blends of the start and end colours with too little contrast. That is
+ * not what a visitor sees for more than a fraction of a second, but on a slow machine (CI) the scan can land there.
+ */
 export async function accessibilityViolations(page) {
+    await page.addStyleTag({
+        content: "*, *::before, *::after { transition: none !important; animation: none !important; }"
+    });
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     const result = await new AxeBuilder({ page }).analyze();
     return result.violations.map(
         (violation) => `${violation.id}: ${violation.nodes.map((node) => node.html).join(" | ")}`
