@@ -162,3 +162,168 @@ body.admin-theme {
     font-size: 12px;
     margin-top: 10px;
 }
+
+/* =========================
+   LIST CARDS, SEARCH, PAGING
+========================= */
+
+.admin-theme .search-box {
+    width: 50%;
+}
+
+.admin-theme .product-title {
+    min-width: 0;
+    max-width: 120px;
+}
+
+.admin-theme .product-price {
+    white-space: nowrap;
+}
+
+/* Shown instead of a product image that is missing or fails to load */
+.admin-theme .product-img-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e2e8f0;
+    color: #94a3b8;
+    font-size: 2.5rem;
+}
+
+/* =========================
+   QR MODAL (extras)
+========================= */
+
+.admin-theme .qr-modal {
+    padding: 1rem;
+}
+
+.admin-theme .qr-modal-box {
+    max-width: 520px;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+.admin-theme #qrContainer canvas,
+.admin-theme #qrContainer img {
+    max-width: 100%;
+    height: auto !important;
+}
+
+/* =========================
+   TABLETS AND PHONES
+   The form goes above the list; the desktop layout above stays as it is.
+========================= */
+
+@media (max-width: 991.98px) {
+    body.admin-theme {
+        height: auto;
+        margin-bottom: 0;
+    }
+
+    .admin-theme .form-sidebar,
+    .admin-theme .content-area {
+        height: auto;
+    }
+
+    .admin-theme .form-sidebar {
+        padding: 1.5rem 1rem;
+    }
+
+    .admin-theme .content-area {
+        padding: 1.5rem 1rem 2rem;
+        border-left: 0;
+        border-top: 1px solid #1e293b;
+    }
+
+    .admin-theme .admin-card {
+        padding: 1.5rem;
+    }
+
+    .admin-theme .search-box {
+        width: 100%;
+    }
+
+    /* The grid takes a full row; the previous/next buttons sit side by side under it. */
+    .admin-theme .list-row {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem !important;
+    }
+
+    .admin-theme .list-row .product-grid-container {
+        order: -1;
+        flex: 1 1 100%;
+        grid-template-rows: none;
+        min-height: 0;
+    }
+
+    .admin-theme .product-title {
+        max-width: none;
+        flex: 1 1 auto;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .admin-theme .product-grid-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================
+   PRINTING A QR CODE
+   Only the QR window is printed: name, price, code and address.
+========================= */
+
+@media print {
+    body.admin-theme {
+        background: #fff;
+        color: #000;
+        height: auto;
+        margin: 0;
+    }
+
+    .admin-theme #login-view,
+    .admin-theme #app-view,
+    .admin-theme .qr-site-address,
+    .admin-theme .qr-actions,
+    .admin-theme #qrWarning {
+        display: none !important;
+    }
+
+    .admin-theme .qr-modal {
+        position: static;
+        display: block;
+        background: none;
+        padding: 0;
+    }
+
+    .admin-theme .qr-modal-box {
+        background: none;
+        color: #000;
+        padding: 0;
+        max-width: none;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .admin-theme #qrTitle {
+        font-size: 20pt;
+    }
+
+    .admin-theme .qr-modal-box .text-primary {
+        color: #000 !important;
+        font-size: 14pt;
+    }
+
+    .admin-theme #qrContainer canvas,
+    .admin-theme #qrContainer img {
+        width: 80mm !important;
+    }
+
+    .admin-theme .qr-link {
+        color: #000;
+        font-size: 10pt;
+        word-break: break-all;
+    }
+}

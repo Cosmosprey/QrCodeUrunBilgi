@@ -107,11 +107,11 @@
             <!-- SAĞ LİSTE -->
             <div class="col-lg-7 col-xl-8 content-area">
                 <div class="d-flex justify-content-between align-items-center mb-5">
-                    <input type="text" id="search-input" class="form-control w-50 rounded-pill ps-4"
+                    <input type="text" id="search-input" class="form-control search-box rounded-pill ps-4"
                         placeholder="Ürün ara...">
                 </div>
                 <div id="list-error" class="alert alert-danger py-2 d-none" role="alert"></div>
-                <div class="d-flex align-items-center gap-4 flex-grow-1">
+                <div class="list-row d-flex align-items-center gap-4 flex-grow-1">
                     <button class="nav-btn" id="prevBtn"><i
                             class="bi bi-chevron-left"></i></button>
                     <div id="product-grid" class="product-grid-container"></div>
@@ -127,13 +127,30 @@
     <div id="qrModal" class="qr-modal d-none">
 
         <div class="qr-modal-box">
-            <h5>QR Kod</h5>
+            <h5 id="qrTitle" class="mb-0">QR Kod</h5>
+            <p id="qrPrice" class="text-primary fw-bold mb-2"></p>
 
             <div id="qrContainer"></div>
 
             <p id="qrLink" class="qr-link"></p>
 
-            <button id="qrCloseBtn" type="button" class="btn btn-secondary mt-2">Kapat</button>
+            <div id="qrWarning" class="alert alert-warning py-2 small text-start d-none" role="alert"></div>
+
+            <div class="qr-site-address text-start mt-3">
+                <label for="qrSiteUrl" class="form-label small text-white-50 mb-1">Site adresi (QR kodunda kullanılır)</label>
+                <div class="input-group">
+                    <input type="text" id="qrSiteUrl" class="form-control" placeholder="http://192.168.1.20:5000"
+                        autocomplete="off" spellcheck="false">
+                    <button id="qrSiteSave" type="button" class="btn btn-outline-light">Kaydet</button>
+                </div>
+                <div id="qrSiteMessage" class="small mt-1 d-none" role="status"></div>
+            </div>
+
+            <div class="qr-actions d-flex flex-wrap justify-content-center gap-2 mt-3">
+                <button id="qrDownloadBtn" type="button" class="btn btn-primary"><i class="bi bi-download me-1"></i>PNG indir</button>
+                <button id="qrPrintBtn" type="button" class="btn btn-outline-light"><i class="bi bi-printer me-1"></i>Yazdır</button>
+                <button id="qrCloseBtn" type="button" class="btn btn-secondary">Kapat</button>
+            </div>
         </div>
 
     </div>

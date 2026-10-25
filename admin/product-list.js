@@ -38,23 +38,33 @@ function actionButton(className, title, icon, onClick) {
     }, [el("i", { className: `bi ${icon}` })]);
 }
 
+// A product without a usable image (or whose image fails to load) shows a neutral icon instead of a broken image.
+function imageOrPlaceholder(imageUrl) {
+    const placeholder = () => el("div", { className: "product-img product-img-placeholder" }, [el("i", { className: "bi bi-image" })]);
+    if (!imageUrl) return placeholder();
+
+    const image = el("img", { className: "product-img", attrs: { src: imageUrl, loading: "lazy", alt: "" } });
+    image.addEventListener("error", () => image.replaceWith(placeholder()), { once: true });
+    return image;
+}
+
 function buildProductCard(p) {
     const badge = stockBadge(p.stockCount);
     const imageUrl = safeHttpUrl(p.image);
 
     return el("div", { className: "product-card d-flex flex-column position-relative shadow" }, [
         el("span", { className: `badge position-absolute top-0 end-0 m-3 ${badge.className}`, text: badge.text }),
-        el("img", { className: "product-img", attrs: { src: imageUrl, loading: "lazy", alt: "" } }),
+        imageOrPlaceholder(imageUrl),
         el("div", { className: "p-3 d-flex flex-column flex-grow-1" }, [
             el("div", { className: "d-flex justify-content-between align-items-center mb-1" }, [
-                el("h6", { className: "mb-0 fw-bold text-white text-truncate", text: String(p.name ?? ""), attrs: { style: "max-width:120px" } }),
-                el("span", { className: "text-primary fw-bold", text: formatPrice(p.price) })
+                el("h6", { className: "product-title mb-0 fw-bold text-white text-truncate", text: String(p.name ?? "") }),
+                el("span", { className: "product-price text-primary fw-bold", text: formatPrice(p.price) })
             ]),
             el("p", { className: "product-desc", text: p.description || "Açıklama yok." }),
             el("div", { className: "mt-auto d-flex gap-2" }, [
                 actionButton("btn-outline-light", "Düzenle", "bi-pencil", () => handlers.onEdit(p)),
                 actionButton("btn-outline-danger", "Sil", "bi-trash", () => deleteProduct(p.id)),
-                actionButton("btn-primary", "QR Göster", "bi-qr-code", () => handlers.onShowQr(p.id))
+                actionButton("btn-primary", "QR Göster", "bi-qr-code", () => handlers.onShowQr(p))
             ])
         ])
     ]);
@@ -86,7 +96,7 @@ async function deleteProduct(id) {
 }
 
 /**
- * Connects the list to the page. Callbacks: onEdit(product), onShowQr(productId), and
+ * Connects the list to the page. Callbacks: onEdit(product), onShowQr(product), and
  * onAccessDenied() for when the signed-in account is not allowed to read the products.
  */
 export function initProductList(callbacks) {

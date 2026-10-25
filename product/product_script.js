@@ -142,9 +142,17 @@ function renderProduct(p, now) {
     document.getElementById("description").textContent = p.description || "Açıklama belirtilmedi.";
     document.getElementById("category").textContent = p.category ?? "";
 
+    // A missing image, or one that fails to load, is replaced by a neutral icon.
     const imageEl = document.getElementById("image");
+    const placeholderEl = document.getElementById("image-placeholder");
     const imageUrl = safeHttpUrl(p.image);
+    const showPlaceholder = (show) => {
+        imageEl.classList.toggle("d-none", show);
+        placeholderEl.classList.toggle("d-none", !show);
+    };
+    showPlaceholder(!imageUrl);
     if (imageUrl) {
+        imageEl.addEventListener("error", () => showPlaceholder(true), { once: true });
         imageEl.src = imageUrl;
     } else {
         imageEl.removeAttribute("src");

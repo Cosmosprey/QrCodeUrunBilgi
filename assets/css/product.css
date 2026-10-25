@@ -169,3 +169,29 @@ body.product-theme {
         transform: translateY(-2px);
     }
 }
+
+/* =========================
+   LONG NAMES AND MISSING IMAGE
+========================= */
+
+/* A long word with no spaces must wrap instead of widening the page. */
+.product-theme #name,
+.product-theme #description {
+    overflow-wrap: anywhere;
+}
+
+.product-theme .content-segment {
+    min-width: 0;
+}
+
+/* Shown instead of a product image that is missing or fails to load */
+.product-theme .hero-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e2e8f0;
+    color: #94a3b8;
+    font-size: 5rem;
+}
