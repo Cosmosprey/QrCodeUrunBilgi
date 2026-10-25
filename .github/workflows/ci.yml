@@ -62,7 +62,7 @@ jobs:
       # Starts the emulators itself and opens the pages in Chromium.
       - run: npm run test:e2e
       # When a test fails, the traces show what the page looked like step by step.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-traces
