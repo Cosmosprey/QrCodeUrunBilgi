@@ -2,16 +2,17 @@
 
 import { initAuthUi, signOutWithMessage } from "./auth-ui.js";
 import { initProductList, loadProducts, clearProducts, findProduct } from "./product-list.js";
-import { initProductForm, startEdit, resetForm } from "./product-form.js";
+import { initProductForm, startEdit, resetForm, isSaving, cancelEditOf } from "./product-form.js";
 import { initQrModal, showQr } from "./qr-modal.js";
-import { t } from "../shared/i18n.js";
 
 initQrModal();
 
 initProductList({
     onEdit: startEdit,
     onShowQr: showQr,
-    onAccessDenied: () => signOutWithMessage(t("login.error.noAdmin"))
+    onDeleted: cancelEditOf,
+    isBusy: isSaving,
+    onAccessDenied: () => signOutWithMessage("login.error.noAdmin")
 });
 
 initProductForm({ findProduct, onSaved: loadProducts });

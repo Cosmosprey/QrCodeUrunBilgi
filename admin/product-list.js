@@ -20,7 +20,7 @@ const listError = document.getElementById("list-error");
 let products = [];
 let loaded = false; // true after the first answer from Firestore
 let currentPage = 0;
-let handlers = { onEdit() {}, onShowQr() {}, onAccessDenied() {} };
+let handlers = { onEdit() {}, onShowQr() {}, onAccessDenied() {}, onDeleted() {}, isBusy: () => false };
 
 function stockBadge(value) {
     const stock = stockStatus(value);
@@ -107,22 +107,25 @@ function renderProducts() {
 }
 
 async function deleteProduct(id) {
+    if (handlers.isBusy()) return; // a save is running
     if (!confirm(t("list.confirmDelete"))) return;
 
     try {
         const imageUrl = findProduct(id)?.image;
         await deleteDoc(doc(db, "products", id));
         await deleteProductImage(imageUrl);
+        handlers.onDeleted(id);
         await loadProducts();
         showToast(t("toast.deleted"));
     } catch (err) {
-        console.error("Silme hatası:", err);
-        showMessage(listError, t("list.deleteError"));
+        console.error("Could not delete the product:", err);
+        showMessage(listError, "list.deleteError");
     }
 }
 
 /**
- * Connects the list to the page. Callbacks: onEdit(product), onShowQr(product), and
+ * Connects the list to the page. Callbacks: onEdit(product), onShowQr(product), onDeleted(id) after a product was
+ * deleted, isBusy() (true while a save is running: nothing may be edited or deleted then) and
  * onAccessDenied() for when the signed-in account is not allowed to read the products.
  */
 export function initProductList(callbacks) {
@@ -156,13 +159,13 @@ export async function loadProducts() {
         products = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
         loaded = true;
     } catch (err) {
-        console.error("Ürünler alınamadı:", err);
+        console.error("Could not load the products:", err);
         grid.replaceChildren(); // do not leave the loading text on screen
         if (err?.code === "permission-denied") {
             // Signed in, but not the admin account named in the security rules.
             await handlers.onAccessDenied();
         } else {
-            showMessage(listError, t("list.loadError"));
+            showMessage(listError, "list.loadError");
         }
         return;
     }

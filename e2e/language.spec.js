@@ -96,6 +96,28 @@ test.describe("the selected language stands out from the other one", () => {
     });
 });
 
+test("a message that stays on screen is translated when the language changes", async ({ page }) => {
+    await page.goto("/admin/admin.html");
+    await page.locator("#login-username").fill("admin");
+    await page.locator("#login-password").fill("wrong-password");
+    await page.locator("#login-btn").click();
+    await expect(page.locator("#login-error")).toHaveText("Kullanıcı adı veya parola hatalı.");
+
+    await page.getByRole("button", { name: "EN" }).click();
+    await expect(page.locator("#login-error")).toHaveText("Wrong username or password.");
+
+    await page.locator("#login-password").fill("admin123");
+    await page.locator("#login-btn").click();
+    await expect(page.locator("#app-view")).toBeVisible();
+
+    // a message in the product form too
+    await fillProductForm(page, { name: "   ", price: 1, stockCount: 1 });
+    await page.getByRole("button", { name: "SAVE" }).click();
+    await expect(page.locator("#form-error")).toHaveText("The product name must be 2 to 70 characters.");
+    await page.locator("#app-view").getByRole("button", { name: "TR" }).click();
+    await expect(page.locator("#form-error")).toHaveText("Ürün adı 2 ile 70 karakter arasında olmalı.");
+});
+
 test("an unknown category is shown as it was stored", async ({ page }) => {
     const id = await addProduct({ category: "Oyuncak" });
     await page.goto(`/product/product.html?id=${id}`);

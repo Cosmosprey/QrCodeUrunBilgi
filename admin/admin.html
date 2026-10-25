@@ -14,7 +14,7 @@
 
 <body class="admin-theme i18n-pending">
 
-    <!-- GİRİŞ EKRANI (yönetici girişi yapılana kadar tek görünen bölüm) -->
+    <!-- SIGN-IN SCREEN (the only section that is shown until the admin has signed in) -->
     <main id="login-view" class="login-wrapper d-none">
         <div class="lang-switch login-lang" role="group" aria-label="Dil / Language">
             <button type="button" data-lang="tr" aria-pressed="true">TR</button>
@@ -44,7 +44,7 @@
 
     <main id="app-view" class="container-fluid d-none">
         <div class="row">
-            <!-- SOL FORM -->
+            <!-- LEFT: THE FORM -->
             <div class="col-lg-5 col-xl-4 form-sidebar">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
                     <h1 class="h2 fw-bold mb-0 text-nowrap"><i class="bi bi-qr-code-scan text-primary me-2" aria-hidden="true"></i>QR Panel</h1>
@@ -62,17 +62,17 @@
                     <h2 id="form-title" class="h4 mb-4 fw-bold">Ürün Ekle</h2>
                     <form id="product-form">
                         <div class="mb-3">
-                            <!-- İsim Alanı -->
+                            <!-- Name -->
                             <label for="name" class="visually-hidden" data-i18n="form.nameLabel">Ürün adı</label>
                             <input type="text" id="name" class="form-control" placeholder="Ürün Adı" data-i18n-placeholder="form.namePlaceholder" required
                                 minlength="2" maxlength="70">
                         </div>
                         <div class="row mb-3">
-                            <!-- Fiyat Alanı -->
-                            <div class="col-7"><label for="price" class="visually-hidden" data-i18n="form.price">Fiyat (₺)</label><input type="number" id="price" class="form-control" min="0.01"
+                            <!-- Price -->
+                            <div class="col-7"><label for="price" class="visually-hidden" data-i18n="form.price">Fiyat (₺)</label><input type="number" id="price" class="form-control" min="0.01" max="1000000"
                                     step="0.01" placeholder="Fiyat (₺)" data-i18n-placeholder="form.price" required></div>
                             <div class="col-5">
-                                <!-- Kategori Alanı -->
+                                <!-- Category -->
                                 <label for="category" class="visually-hidden" data-i18n="form.category">Kategori</label>
                                 <select id="category" class="form-select">
                                     <option value="Yiyecek" data-i18n="category.food">Yiyecek</option>
@@ -81,7 +81,7 @@
                                 </select>
                             </div>
                         </div>
-                        <!-- Tarih Türü Seçimi -->
+                        <!-- Date type -->
                         <fieldset class="mb-3">
                             <legend class="visually-hidden" data-i18n="form.dateType">Tarih türü</legend>
                             <div class="d-flex gap-3">
@@ -97,34 +97,35 @@
                                 </div>
                             </div>
                         </fieldset>
-                        <!-- Son Kullanma Tarihi Alan -->
+                        <!-- Use-by / best-before date -->
                         <div class="mb-3">
                             <label for="lastUseDate" class="form-label small text-white-50 mb-1" data-i18n="form.date">SKT / TETT tarihi</label>
                             <input type="date" id="lastUseDate" class="form-control">
                         </div>
-                        <!-- Stok Adedi Alanı -->
+                        <!-- Stock quantity -->
                         <div class="mb-3">
                             <label for="stockCount" class="visually-hidden" data-i18n="form.stockLabel">Stok adedi</label>
                             <div class="input-group">
                                 <input type="number" id="stockCount" class="form-control" placeholder="Stok Adedi" data-i18n-placeholder="form.stockPlaceholder"
-                                    min="0" step="1" required>
+                                    min="0" max="1000000" step="1" required>
                             </div>
                         </div>
-                        <!-- Açıklama Alanı -->
+                        <!-- Description -->
                         <div class="mb-3"><label for="description" class="visually-hidden" data-i18n="form.descriptionLabel">Ürün açıklaması</label><textarea id="description" class="form-control" rows="2" maxlength="1000"
                                 placeholder="Ürün açıklaması..." data-i18n-placeholder="form.descriptionPlaceholder"></textarea></div>
-                        <!-- Görsel URL Alanı -->
+                        <!-- Picture -->
                         <div class="mb-4 d-flex align-items-center gap-2">
                             <label for="imageFile" class="visually-hidden" data-i18n="form.image">Ürün görseli</label>
                             <input type="file" id="imageFile" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif">
                         </div>
                         <div id="form-error" class="alert alert-danger py-2 d-none" role="alert"></div>
                         <button type="submit" id="submit-btn" class="btn btn-primary w-100 py-3 fw-bold"><span id="submit-spinner" class="spinner-border spinner-border-sm me-2 d-none" aria-hidden="true"></span><span id="submit-label">KAYDET</span></button>
+                        <button type="button" id="cancel-edit-btn" class="btn btn-outline-light w-100 mt-2 d-none" data-i18n="form.cancel">İPTAL</button>
                     </form>
                 </div>
             </div>
 
-            <!-- SAĞ LİSTE -->
+            <!-- RIGHT: THE LIST -->
             <div class="col-lg-7 col-xl-8 content-area">
                 <h2 class="visually-hidden" data-i18n="list.heading">Ürünler</h2>
                 <div class="d-flex justify-content-between align-items-center mb-5">
@@ -176,7 +177,7 @@
         </div>
 
     </div>
-    <!-- Bildirimler (toast): ekran okuyuculara da duyurulur -->
+    <!-- Notifications (toasts): also announced to screen readers -->
     <div id="toast-region" class="toast-region" role="status" aria-live="polite"></div>
 </body>
 

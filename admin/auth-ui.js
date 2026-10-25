@@ -3,7 +3,6 @@
 import { auth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "./firebase-admin.js";
 import { usernameToEmail } from "./username.js";
 import { showMessage } from "./ui.js";
-import { t } from "../shared/i18n.js";
 
 const loginView = document.getElementById("login-view");
 const appView = document.getElementById("app-view");
@@ -13,27 +12,27 @@ const loginButton = document.getElementById("login-btn");
 const loginSpinner = document.getElementById("login-spinner");
 const passwordInput = document.getElementById("login-password");
 
-function loginErrorMessage(err) {
+function loginErrorKey(err) {
     switch (err?.code) {
         case "auth/invalid-credential":
         case "auth/invalid-login-credentials":
         case "auth/user-not-found":
         case "auth/wrong-password":
         case "auth/invalid-email":
-            return t("login.error.credentials");
+            return "login.error.credentials";
         case "auth/too-many-requests":
-            return t("login.error.tooMany");
+            return "login.error.tooMany";
         case "auth/network-request-failed":
-            return t("login.error.network");
+            return "login.error.network";
         default:
-            return t("login.error.other");
+            return "login.error.other";
     }
 }
 
-/** Signs out and explains why on the login screen (used when an account has no admin rights). */
-export async function signOutWithMessage(message) {
+/** Signs out and explains why (a translation key) on the login screen, e.g. when an account has no admin rights. */
+export async function signOutWithMessage(messageKey) {
     await signOut(auth);
-    showMessage(loginError, message);
+    showMessage(loginError, messageKey);
 }
 
 /**
@@ -49,7 +48,7 @@ export function initAuthUi({ onSignedIn, onSignedOut }) {
         const email = usernameToEmail(document.getElementById("login-username").value);
         const password = passwordInput.value;
         if (!email || !password) {
-            showMessage(loginError, t("login.error.credentials"));
+            showMessage(loginError, "login.error.credentials");
             return;
         }
 
@@ -58,7 +57,7 @@ export function initAuthUi({ onSignedIn, onSignedOut }) {
         try {
             await signInWithEmailAndPassword(auth, email, password);
         } catch (err) {
-            showMessage(loginError, loginErrorMessage(err));
+            showMessage(loginError, loginErrorKey(err));
         } finally {
             loginButton.disabled = false;
             loginSpinner.classList.add("d-none");

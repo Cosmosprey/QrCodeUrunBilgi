@@ -41,6 +41,7 @@ export const tr = {
     "form.image": "Ürün görseli",
     "form.save": "KAYDET",
     "form.update": "GÜNCELLE",
+    "form.cancel": "İPTAL",
 
     // ---- admin: product list
     "list.heading": "Ürünler",
@@ -76,6 +77,9 @@ export const tr = {
     "error.image.type": "Görsel JPEG, PNG, WebP veya GIF olmalıdır.",
     "error.image.gifTooLarge": "GIF dosyaları en fazla 2 MB olabilir.",
     "error.image.tooLarge": "Görsel en fazla 25 MB olabilir.",
+    "error.name.length": "Ürün adı 2 ile 70 karakter arasında olmalı.",
+    "error.price.range": "Fiyat 0,01 ile 1.000.000 arasında olmalı.",
+    "error.stock.range": "Stok, 0 ile 1.000.000 arasında bir tam sayı olmalı.",
     "error.date.invalid": "Geçerli bir tarih girin.",
     "error.date.pastSkt": "Son kullanma tarihi geçmiş bir ürün eklenemez.",
     "error.site.invalid":

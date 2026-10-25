@@ -56,12 +56,20 @@ const SOURCE_FILES = ["admin", "product", "shared"].flatMap((dir) =>
 const source = (file) => readFileSync(file, "utf8");
 const KEY_SHAPE = /^[a-z][A-Za-z0-9]*(\.[A-Za-z0-9]+)+$/;
 
+// A key that is only mentioned in a comment is not used: comments are removed before the code is scanned.
+const withoutComments = (text) =>
+    text
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/<!--[\s\S]*?-->/g, "")
+        .replace(/(^|\s)\/\/.*$/gm, "$1");
+
 describe("keys used in the code", () => {
     const usedInCalls = new Set();
     const anyLiteral = new Set();
     for (const file of SOURCE_FILES.filter((f) => !f.includes("locales"))) {
-        const text = source(file);
+        const text = withoutComments(source(file));
         for (const m of text.matchAll(/\bt(?:Parts)?\(\s*["']([^"']+)["']/g)) usedInCalls.add(m[1]);
+        for (const m of text.matchAll(/showMessage\(\s*[\w.]+,\s*["']([^"']+)["']/g)) usedInCalls.add(m[1]);
         for (const m of text.matchAll(/data-i18n(?:-[a-z-]+)?="([^"]+)"/g)) usedInCalls.add(m[1]);
         for (const m of text.matchAll(/["']([a-z][A-Za-z0-9]*(?:\.[A-Za-z0-9]+)+)["']/g)) anyLiteral.add(m[1]);
     }
@@ -80,10 +88,14 @@ describe("keys used in the code", () => {
         }
     });
 
-    test("literals that look like keys, next to the code that returns them, exist too", () => {
-        // functions such as validateImageFile return keys; every "error.*" literal must be a real key
+    test("every literal that looks like a key of this app exists (functions such as validators return keys)", () => {
+        // the first part of a key ("error", "login", ...) is a namespace of the dictionary
+        const namespaces = new Set(Object.keys(tr).map((key) => key.split(".")[0]));
+        const looksLikeFile = /\.(html|js|css|json|png|svg|webp|jpe?g|gif|ico)$/;
         for (const key of anyLiteral) {
-            if (key.startsWith("error.") || key.startsWith("category.")) assert.ok(Object.hasOwn(tr, key), key);
+            if (!namespaces.has(key.split(".")[0]) || looksLikeFile.test(key)) continue;
+            assert.ok(Object.hasOwn(tr, key), `"${key}" looks like a translation key but tr.js has no such key`);
+            assert.ok(Object.hasOwn(en, key), `"${key}" looks like a translation key but en.js has no such key`);
         }
         assert.ok(KEY_SHAPE.test("error.image.type"));
     });
