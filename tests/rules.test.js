@@ -88,6 +88,50 @@ describe("firestore: who may do what", () => {
     });
 });
 
+describe("firestore: site address setting", () => {
+    const site = (context) => doc(context.firestore(), "settings", "site");
+    const withSetting = () => testEnv.withSecurityRulesDisabled((context) => setDoc(site(context), { siteUrl: "http://192.168.1.20:5000" }));
+
+    test("only the admin can read it", async () => {
+        await withSetting();
+        await assertSucceeds(getDoc(site(admin())));
+        await assertFails(getDoc(site(anonymous())));
+        await assertFails(getDoc(site(stranger())));
+    });
+
+    test("only the admin can write or delete it", async () => {
+        await assertSucceeds(setDoc(site(admin()), { siteUrl: "https://magaza.example.com" }));
+        await assertFails(setDoc(site(anonymous()), { siteUrl: "https://evil.example.com" }));
+        await assertFails(setDoc(site(stranger()), { siteUrl: "https://evil.example.com" }));
+        await withSetting();
+        await assertFails(deleteDoc(site(anonymous())));
+        await assertFails(deleteDoc(site(stranger())));
+        await assertSucceeds(deleteDoc(site(admin())));
+    });
+
+    test("accepts http and https addresses", async () => {
+        await assertSucceeds(setDoc(site(admin()), { siteUrl: "http://192.168.1.20:5000" }));
+        await assertSucceeds(setDoc(site(admin()), { siteUrl: "https://example.com/magaza" }));
+    });
+
+    test("rejects anything that is not an http(s) address", async () => {
+        for (const bad of ["javascript:alert(1)", "ftp://example.com", "192.168.1.20:5000", "http://with space.example", "", "http://", 42, null]) {
+            await assertFails(setDoc(site(admin()), { siteUrl: bad }));
+        }
+        await assertFails(setDoc(site(admin()), { siteUrl: "https://example.com/" + "x".repeat(200) }));
+    });
+
+    test("rejects extra or missing fields", async () => {
+        await assertFails(setDoc(site(admin()), { siteUrl: "https://example.com", extra: 1 }));
+        await assertFails(setDoc(site(admin()), {}));
+    });
+
+    test("no other document can be created in settings", async () => {
+        await assertFails(setDoc(doc(admin().firestore(), "settings", "other"), { siteUrl: "https://example.com" }));
+        await assertFails(addDoc(collection(admin().firestore(), "settings"), { siteUrl: "https://example.com" }));
+    });
+});
+
 describe("firestore: product validation (admin writes)", () => {
     const rejects = (label, change) =>
         test(`rejects ${label}`, async () => {
