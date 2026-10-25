@@ -19,19 +19,23 @@ describe("normalizeSiteUrl", () => {
         assert.deepEqual(normalizeSiteUrl("https://example.com:443"), { url: "https://example.com" });
     });
 
-    test("rejects empty input, missing scheme and other schemes", () => {
-        for (const bad of ["", "   ", null, undefined, "192.168.1.20:5000", "example.com", "ftp://example.com",
-            "javascript:alert(1)", "data:text/html,x", "file:///etc/passwd"]) {
-            const result = normalizeSiteUrl(bad);
-            assert.ok(result.error, `${JSON.stringify(bad)} should be rejected`);
-            assert.equal(result.url, undefined);
+    test("rejects empty input and a missing scheme", () => {
+        for (const bad of ["", "   ", null, undefined, "192.168.1.20:5000", "example.com"]) {
+            assert.deepEqual(normalizeSiteUrl(bad), { error: "error.site.invalid" }, JSON.stringify(bad));
         }
     });
 
+    test("rejects other schemes (some are not even addresses to the URL parser)", () => {
+        assert.deepEqual(normalizeSiteUrl("ftp://example.com"), { error: "error.site.scheme" });
+        assert.deepEqual(normalizeSiteUrl("javascript:alert(1)"), { error: "error.site.scheme" });
+        assert.deepEqual(normalizeSiteUrl("data:text/html,x"), { error: "error.site.scheme" });
+        assert.deepEqual(normalizeSiteUrl("file:///etc/passwd"), { error: "error.site.scheme" });
+    });
+
     test("rejects credentials, query strings and fragments", () => {
-        for (const bad of ["http://user:pass@example.com", "http://example.com?x=1", "http://example.com/#top"]) {
-            assert.ok(normalizeSiteUrl(bad).error, bad);
-        }
+        assert.deepEqual(normalizeSiteUrl("http://user:pass@example.com"), { error: "error.site.credentials" });
+        assert.deepEqual(normalizeSiteUrl("http://example.com?x=1"), { error: "error.site.queryOrHash" });
+        assert.deepEqual(normalizeSiteUrl("http://example.com/#top"), { error: "error.site.queryOrHash" });
     });
 });
 

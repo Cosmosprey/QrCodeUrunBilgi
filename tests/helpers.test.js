@@ -36,7 +36,7 @@ describe("validateImageFile", () => {
 
     test("rejects SVG and other non-image types", () => {
         for (const type of ["image/svg+xml", "text/html", "application/pdf", ""]) {
-            assert.match(validateImageFile(file(type, 1000)), /JPEG, PNG, WebP veya GIF/, type);
+            assert.equal(validateImageFile(file(type, 1000)), "error.image.type", type);
         }
     });
 
@@ -44,13 +44,13 @@ describe("validateImageFile", () => {
         for (const type of ["image/jpeg", "image/png", "image/webp"]) {
             assert.equal(validateImageFile(file(type, 8 * 1024 * 1024)), null, type);
             assert.equal(validateImageFile(file(type, MAX_INPUT_BYTES)), null, type);
-            assert.match(validateImageFile(file(type, MAX_INPUT_BYTES + 1)), /25 MB/, type);
+            assert.equal(validateImageFile(file(type, MAX_INPUT_BYTES + 1)), "error.image.tooLarge", type);
         }
     });
 
     test("GIFs are not shrunk, so they keep the 2 MB upload limit", () => {
         assert.equal(validateImageFile(file("image/gif", MAX_IMAGE_BYTES)), null);
-        assert.match(validateImageFile(file("image/gif", MAX_IMAGE_BYTES + 1)), /GIF.*2 MB/);
+        assert.equal(validateImageFile(file("image/gif", MAX_IMAGE_BYTES + 1)), "error.image.gifTooLarge");
     });
 
     test("does not treat inherited object properties as allowed types", () => {

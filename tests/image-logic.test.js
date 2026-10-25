@@ -53,7 +53,7 @@ describe("formatBytes", () => {
 
     test("megabytes with one decimal, in the language's number format", () => {
         assert.equal(formatBytes(4.2 * 1024 * 1024), "4,2 MB");
-        assert.equal(formatBytes(4.2 * 1024 * 1024, "en-US"), "4.2 MB");
+        assert.equal(formatBytes(4.2 * 1024 * 1024, "en"), "4.2 MB");
         assert.equal(formatBytes(2 * 1024 * 1024), "2 MB");
     });
 });

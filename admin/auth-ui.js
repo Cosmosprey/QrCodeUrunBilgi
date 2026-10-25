@@ -3,6 +3,7 @@
 import { auth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "./firebase-admin.js";
 import { usernameToEmail } from "./username.js";
 import { showMessage } from "./ui.js";
+import { t } from "../shared/i18n.js";
 
 const loginView = document.getElementById("login-view");
 const appView = document.getElementById("app-view");
@@ -19,13 +20,13 @@ function loginErrorMessage(err) {
         case "auth/user-not-found":
         case "auth/wrong-password":
         case "auth/invalid-email":
-            return "Kullanıcı adı veya parola hatalı.";
+            return t("login.error.credentials");
         case "auth/too-many-requests":
-            return "Çok fazla hatalı deneme. Bir süre sonra tekrar deneyin.";
+            return t("login.error.tooMany");
         case "auth/network-request-failed":
-            return "Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.";
+            return t("login.error.network");
         default:
-            return "Giriş yapılamadı. Lütfen tekrar deneyin.";
+            return t("login.error.other");
     }
 }
 
@@ -48,7 +49,7 @@ export function initAuthUi({ onSignedIn, onSignedOut }) {
         const email = usernameToEmail(document.getElementById("login-username").value);
         const password = passwordInput.value;
         if (!email || !password) {
-            showMessage(loginError, "Kullanıcı adı veya parola hatalı.");
+            showMessage(loginError, t("login.error.credentials"));
             return;
         }
 

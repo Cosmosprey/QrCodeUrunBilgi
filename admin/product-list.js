@@ -7,6 +7,7 @@ import { filterProductsByName, pageInfo, listState } from "./list-logic.js";
 import { deleteProductImage } from "./product-images.js";
 import { showMessage } from "./ui.js";
 import { showToast } from "./toast.js";
+import { t, getLanguage, onLanguageChange } from "../shared/i18n.js";
 
 const ITEMS_PER_PAGE = 4;
 
@@ -24,12 +25,12 @@ let handlers = { onEdit() {}, onShowQr() {}, onAccessDenied() {} };
 function stockBadge(value) {
     const stock = stockStatus(value);
     if (stock.level === "ok") {
-        return { className: "bg-success", text: `Stok: ${stock.count}` }; // Yeşil - Sorun yok
+        return { className: "bg-success", text: t("card.stockOk", { count: stock.count }) }; // green: fine
     }
     if (stock.level === "low") {
-        return { className: "bg-warning text-dark", text: `Kritik Stok: ${stock.count}` }; // Turuncu - Takip et!
+        return { className: "bg-warning text-dark", text: t("card.stockLow", { count: stock.count }) }; // orange: keep an eye on it
     }
-    return { className: "bg-danger", text: "Tükendi" }; // Kırmızı - Hemen sipariş ver!
+    return { className: "bg-danger", text: t("card.stockOut") }; // red: reorder now
 }
 
 function actionButton(className, title, icon, onClick) {
@@ -60,22 +61,22 @@ function buildProductCard(p) {
         el("div", { className: "p-3 d-flex flex-column flex-grow-1" }, [
             el("div", { className: "d-flex justify-content-between align-items-center mb-1" }, [
                 el("h3", { className: "product-title h6 mb-0 fw-bold text-white text-truncate", text: String(p.name ?? "") }),
-                el("span", { className: "product-price text-primary fw-bold", text: formatPrice(p.price) })
+                el("span", { className: "product-price text-primary fw-bold", text: formatPrice(p.price, getLanguage()) })
             ]),
-            el("p", { className: "product-desc", text: p.description || "Açıklama yok." }),
+            el("p", { className: "product-desc", text: p.description || t("card.noDescription") }),
             el("div", { className: "mt-auto d-flex gap-2" }, [
-                actionButton("btn-outline-light", "Düzenle", "bi-pencil", () => handlers.onEdit(p)),
-                actionButton("btn-outline-danger", "Sil", "bi-trash", () => deleteProduct(p.id)),
-                actionButton("btn-primary", "QR Göster", "bi-qr-code", () => handlers.onShowQr(p))
+                actionButton("btn-outline-light", t("card.edit"), "bi-pencil", () => handlers.onEdit(p)),
+                actionButton("btn-outline-danger", t("card.delete"), "bi-trash", () => deleteProduct(p.id)),
+                actionButton("btn-primary", t("card.qr"), "bi-qr-code", () => handlers.onShowQr(p))
             ])
         ])
     ]);
 }
 
-const STATUS_TEXT = {
-    loading: "Ürünler yükleniyor...",
-    empty: "Henüz ürün yok. Soldaki formdan ilk ürünü ekleyin.",
-    "no-results": "Aramanızla eşleşen ürün bulunamadı."
+const STATUS_KEYS = {
+    loading: "list.loading",
+    empty: "list.empty",
+    "no-results": "list.noResults"
 };
 
 function renderProducts() {
@@ -87,7 +88,7 @@ function renderProducts() {
     if (state === "list") {
         grid.replaceChildren(...filtered.slice(page.start, page.end).map(buildProductCard));
     } else {
-        grid.replaceChildren(el("p", { className: "list-status", text: STATUS_TEXT[state] }));
+        grid.replaceChildren(el("p", { className: "list-status", text: t(STATUS_KEYS[state]) }));
     }
 
     previousButton.disabled = !page.hasPrevious;
@@ -95,17 +96,17 @@ function renderProducts() {
 }
 
 async function deleteProduct(id) {
-    if (!confirm("Silmek istiyor musun?")) return;
+    if (!confirm(t("list.confirmDelete"))) return;
 
     try {
         const imageUrl = findProduct(id)?.image;
         await deleteDoc(doc(db, "products", id));
         await deleteProductImage(imageUrl);
         await loadProducts();
-        showToast("Ürün silindi.");
+        showToast(t("toast.deleted"));
     } catch (err) {
         console.error("Silme hatası:", err);
-        showMessage(listError, "Ürün silinemedi. Lütfen tekrar deneyin.");
+        showMessage(listError, t("list.deleteError"));
     }
 }
 
@@ -122,6 +123,7 @@ export function initProductList(callbacks) {
     });
     previousButton.addEventListener("click", () => { currentPage--; renderProducts(); });
     nextButton.addEventListener("click", () => { currentPage++; renderProducts(); });
+    onLanguageChange(renderProducts);
 }
 
 export function findProduct(id) {
@@ -130,7 +132,7 @@ export function findProduct(id) {
 
 export async function loadProducts() {
     showMessage(listError, "");
-    if (!loaded) renderProducts(); // "Ürünler yükleniyor..." until the first answer
+    if (!loaded) renderProducts(); // "Loading products..." until the first answer
 
     try {
         const snapshot = await getDocs(collection(db, "products"));
@@ -138,12 +140,12 @@ export async function loadProducts() {
         loaded = true;
     } catch (err) {
         console.error("Ürünler alınamadı:", err);
-        grid.replaceChildren(); // do not leave "yükleniyor" on screen
+        grid.replaceChildren(); // do not leave the loading text on screen
         if (err?.code === "permission-denied") {
             // Signed in, but not the admin account named in the security rules.
             await handlers.onAccessDenied();
         } else {
-            showMessage(listError, "Ürünler yüklenemedi. Lütfen sayfayı yenileyin.");
+            showMessage(listError, t("list.loadError"));
         }
         return;
     }

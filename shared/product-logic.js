@@ -4,6 +4,7 @@
 // the result does not depend on the time zone.
 
 import { storeConfig } from "./store-config.js";
+import { intlLocale } from "./i18n-core.js";
 
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -95,32 +96,49 @@ export function nextPriceUpdateDate({ previousPrice, previousDate, newPrice, now
     return toDateString(now);
 }
 
-/** Returns a (Turkish) error message for an unacceptable expiry date in the admin form, or null. */
+/** Returns the translation key of an error message for an unacceptable expiry date in the admin form, or null. */
 export function validateExpiryDate({ dateType, dateString, isNewProduct }, now = new Date()) {
     if (!dateString) return null;
-    if (parseDateString(dateString) === null) return "Geçerli bir tarih girin.";
+    if (parseDateString(dateString) === null) return "error.date.invalid";
     // A new SKT product that is already expired must not be put on sale. TETT may be past: the
     // discount for it is the point. Editing an existing product is never blocked by its date.
     if (isNewProduct && dateType === "SKT" && daysUntil(dateString, now) < 0) {
-        return "Son kullanma tarihi geçmiş bir ürün eklenemez.";
+        return "error.date.pastSkt";
     }
     return null;
 }
 
-const priceFormat = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// Categories are stored in Turkish (they are the values of the admin form's select); this maps them to translation keys.
+const CATEGORY_KEYS = {
+    "Yiyecek": "category.food",
+    "İçecek": "category.drink",
+    "Temizlik Malzemeleri": "category.cleaning"
+};
 
-/** "39,90 ₺"; a dash when the value is not a number. */
-export function formatPrice(value) {
+/** Translation key for a stored category name, or null for an unknown one (show the stored text as it is). */
+export function categoryKey(category) {
+    return Object.hasOwn(CATEGORY_KEYS, category) ? CATEGORY_KEYS[category] : null;
+}
+
+const priceFormats = {
+    tr: new Intl.NumberFormat(intlLocale("tr"), { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    en: new Intl.NumberFormat(intlLocale("en"), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+};
+
+/** Turkish: "1.234,50 ₺" (symbol after); English: "₺1,234.50" (symbol before). A dash when the value is not a number. */
+export function formatPrice(value, language = "tr") {
     // Number(null), Number("") and Number(false) are all 0: a missing price must not look free.
     const isNumeric = typeof value === "number" || (typeof value === "string" && value.trim() !== "");
     const number = isNumeric ? Number(value) : NaN;
-    return Number.isFinite(number) ? `${priceFormat.format(number)} ₺` : "—";
+    if (!Number.isFinite(number)) return "—";
+    const formatted = priceFormats[language === "en" ? "en" : "tr"].format(number);
+    return language === "en" ? `₺${formatted}` : `${formatted} ₺`;
 }
 
-/** "25 Ekim 2026" from "YYYY-MM-DD"; "Belirtilmedi" when there is no valid date. */
-export function formatDateTr(dateString) {
+/** "25 Ekim 2026" / "25 October 2026" from "YYYY-MM-DD"; null when there is no valid date. */
+export function formatDate(dateString, language = "tr") {
     const date = parseDateString(dateString);
-    if (!date) return "Belirtilmedi";
+    if (!date) return null;
     return new Date(date.year, date.month - 1, date.day)
-        .toLocaleDateString("tr-TR", { year: "numeric", month: "long", day: "numeric" });
+        .toLocaleDateString(intlLocale(language), { year: "numeric", month: "long", day: "numeric" });
 }
