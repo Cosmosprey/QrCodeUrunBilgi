@@ -15,6 +15,20 @@ describe("normalizeSiteUrl", () => {
         assert.deepEqual(normalizeSiteUrl("https://example.com/magaza/"), { url: "https://example.com/magaza" });
     });
 
+    test("turns the address of the admin or product page into the address of the site", () => {
+        assert.deepEqual(normalizeSiteUrl("http://192.168.1.20:5000/admin/admin.html"), {
+            url: "http://192.168.1.20:5000"
+        });
+        assert.deepEqual(normalizeSiteUrl("https://example.com/magaza/admin/admin.html"), {
+            url: "https://example.com/magaza"
+        });
+        assert.deepEqual(normalizeSiteUrl("http://localhost:5000/product/product.html"), {
+            url: "http://localhost:5000"
+        });
+        // only these two page paths: other paths stay as they are
+        assert.deepEqual(normalizeSiteUrl("https://example.com/admin"), { url: "https://example.com/admin" });
+    });
+
     test("drops the default port", () => {
         assert.deepEqual(normalizeSiteUrl("https://example.com:443"), { url: "https://example.com" });
     });

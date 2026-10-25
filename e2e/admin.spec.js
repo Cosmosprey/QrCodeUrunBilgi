@@ -1,6 +1,16 @@
 // The admin panel: signing in, adding, editing, searching and deleting products.
 
-import { test, expect, NOW, clearData, addProduct, storedProducts, signIn, fillProductForm } from "./support.js";
+import {
+    test,
+    expect,
+    NOW,
+    clearData,
+    addProduct,
+    createUser,
+    storedProducts,
+    signIn,
+    fillProductForm
+} from "./support.js";
 
 test.beforeEach(async ({ page }) => {
     await clearData();
@@ -30,6 +40,18 @@ test.describe("signing in", () => {
         await page.locator("#logout-btn").click();
         await expect(page.locator("#login-view")).toBeVisible();
         await expect(page.locator("#login-password")).toHaveValue("");
+    });
+
+    test("an account that is not the admin is signed out again with an explanation", async ({ page }) => {
+        await createUser("kasiyer", "kasiyer123");
+        await page.goto("/admin/admin.html");
+        await page.locator("#login-username").fill("kasiyer");
+        await page.locator("#login-password").fill("kasiyer123");
+        await page.locator("#login-btn").click();
+
+        await expect(page.locator("#login-error")).toHaveText("Bu hesabın yönetici yetkisi yok.");
+        await expect(page.locator("#login-view")).toBeVisible();
+        await expect(page.locator("#app-view")).toBeHidden();
     });
 
     test("the session survives a reload", async ({ page }) => {

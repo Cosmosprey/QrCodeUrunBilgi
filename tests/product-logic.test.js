@@ -10,13 +10,23 @@ import {
     validateExpiryDate,
     formatPrice,
     formatDate,
-    categoryKey
+    categoryKey,
+    isValidProductId
 } from "../shared/product-logic.js";
 
 // The date logic must give the same answers wherever the visitor is, so the date tests run in
-// several time zones (UTC+14, UTC+3, UTC, UTC-7). `now` is always built from local components,
-// so "25 Oct 15:00" means 15:00 on the wall clock of whichever zone is being tested.
-const TIME_ZONES = ["Pacific/Kiritimati", "Europe/Istanbul", "UTC", "America/Los_Angeles"];
+// several time zones: UTC+14, UTC+3 (no daylight saving), UTC, UTC-7 (North America) and two zones whose clocks
+// change in spring and autumn: Berlin (changes on 29 Mar and 25 Oct 2026) and Sydney (southern hemisphere, the
+// other way round). `now` is always built from local components, so "25 Oct 15:00" means 15:00 on the wall
+// clock of whichever zone is being tested.
+const TIME_ZONES = [
+    "Pacific/Kiritimati",
+    "Europe/Istanbul",
+    "UTC",
+    "America/Los_Angeles",
+    "Europe/Berlin",
+    "Australia/Sydney"
+];
 
 function inTimeZone(zone, fn) {
     const previous = process.env.TZ;
@@ -41,7 +51,8 @@ describe("the time zone switch used by these tests actually works", () => {
             });
             return offset;
         });
-        assert.deepEqual(offsets, [-840, -180, 0, 420]);
+        // on 25 October 2026 at noon: Berlin is already back on winter time, Sydney is on summer time
+        assert.deepEqual(offsets, [-840, -180, 0, 420, -60, -660]);
     });
 });
 
@@ -166,6 +177,28 @@ for (const zone of TIME_ZONES) {
             assert.equal(formatDate("2026-12-31", "en"), "31 December 2026");
             assert.equal(formatDate("nope"), null);
             assert.equal(formatDate("", "en"), null);
+        });
+
+        run("isValidProductId accepts Firestore ids and refuses what cannot be one", () => {
+            for (const id of ["abc", "2-milk", "Zx9Q3pLmN0aB1cD2eF3g", "süt", "a.b", "..a", "a..", "_a_"]) {
+                assert.equal(isValidProductId(id), true, id);
+            }
+            for (const id of [
+                "",
+                ".",
+                "..",
+                "a/b",
+                "../../admin",
+                "__name__",
+                "__x__",
+                "x".repeat(1501),
+                undefined,
+                null,
+                5
+            ]) {
+                assert.equal(isValidProductId(id), false, String(id).slice(0, 20));
+            }
+            assert.equal(isValidProductId("x".repeat(1500)), true);
         });
 
         run("categoryKey maps the stored Turkish categories to translation keys", () => {

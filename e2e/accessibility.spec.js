@@ -30,6 +30,18 @@ for (const [language, button] of [
             expect(await accessibilityViolations(page)).toEqual([]);
         });
 
+        test("admin panel in edit mode (with the Cancel button and an error message)", async ({ page }) => {
+            await addProduct({ name: "Süt 1L" });
+            await signIn(page);
+            await pickLanguage(page);
+            await page.locator(".product-card button.btn-outline-light").click();
+            await expect(page.locator("#cancel-edit-btn")).toBeVisible();
+            await page.locator("#name").fill("   ");
+            await page.locator("#submit-btn").click();
+            await expect(page.locator("#form-error")).toBeVisible();
+            expect(await accessibilityViolations(page)).toEqual([]);
+        });
+
         test("QR window, also with an error message in it", async ({ page }) => {
             await addProduct();
             await signIn(page);

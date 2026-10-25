@@ -41,6 +41,7 @@ export const en = {
     "form.image": "Product image",
     "form.save": "SAVE",
     "form.update": "UPDATE",
+    "form.cancel": "CANCEL",
 
     // ---- admin: product list
     "list.heading": "Products",
@@ -76,6 +77,9 @@ export const en = {
     "error.image.type": "The image must be JPEG, PNG, WebP or GIF.",
     "error.image.gifTooLarge": "GIF files can be at most 2 MB.",
     "error.image.tooLarge": "The image can be at most 25 MB.",
+    "error.name.length": "The product name must be 2 to 70 characters.",
+    "error.price.range": "The price must be between 0.01 and 1,000,000.",
+    "error.stock.range": "The stock must be a whole number from 0 to 1,000,000.",
     "error.date.invalid": "Enter a valid date.",
     "error.date.pastSkt": "A product whose use-by date has passed cannot be added.",
     "error.site.invalid":

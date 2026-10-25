@@ -19,6 +19,6 @@ export async function deleteProductImage(url) {
     try {
         await deleteObject(ref(storage, url));
     } catch (err) {
-        console.warn("Görsel silinemedi (önemli değil):", err);
+        console.warn("Could not delete the image (not important):", err);
     }
 }

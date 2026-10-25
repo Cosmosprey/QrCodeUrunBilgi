@@ -99,7 +99,7 @@ body.admin-theme {
    PRODUCT GRID / CARD
 ========================= */
 
-/* 2'ye 2 yapıdaki admin paneli ürün kartları genel container'ı*/
+/* The container of the product cards: two by two */
 .admin-theme .product-grid-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -109,7 +109,7 @@ body.admin-theme {
     min-height: 500px;
 }
 
-/* hem product.html hem admin_scripts.js  2'ye 2 yapıdaki admin paneli ürün kartları*/
+/* A product card of the admin panel */
 .product-card {
     background: #1e293b;
     border: 1px solid #334155;
@@ -118,7 +118,7 @@ body.admin-theme {
     transition: all 0.3s;
 }
 
-/* admin_script.js innerHTML 2 ye 2 yapıdaki ürün kartları resimleri*/
+/* The picture of a product card: the whole picture is shown, a missing space is white */
 .product-img {
     width: 100%;
     height: 140px;
@@ -126,7 +126,7 @@ body.admin-theme {
     background: #ffffff;
 }
 
-/* admin_script.js innerHTML */
+/* The description of a product card */
 .product-desc {
     color: #94a3b8 !important;
     font-size: 0.75rem;
@@ -187,6 +187,12 @@ body.admin-theme {
 
 .admin-theme .product-price {
     white-space: nowrap;
+}
+
+/* While a save is running the product cards cannot start another edit or delete (see admin/product-form.js) */
+.admin-theme.is-saving .product-card .btn:not(.btn-primary) {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* Shown instead of a product image that is missing or fails to load */

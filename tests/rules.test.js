@@ -3,8 +3,8 @@
 import { test, describe, before, after, beforeEach } from "node:test";
 import { readFileSync } from "node:fs";
 import { initializeTestEnvironment, assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
-import { doc, getDoc, getDocs, collection, setDoc, deleteDoc, addDoc } from "firebase/firestore";
-import { ref, uploadBytes, getBytes, deleteObject, listAll } from "firebase/storage";
+import { doc, getDoc, getDocs, collection, setDoc, deleteDoc, addDoc, updateDoc } from "firebase/firestore";
+import { ref, uploadBytes, getBytes, deleteObject, listAll, updateMetadata } from "firebase/storage";
 
 const ADMIN_UID = "dev-admin-uid"; // default value in firestore.rules / storage.rules
 
@@ -76,6 +76,11 @@ describe("firestore: who may do what", () => {
         await assertSucceeds(addDoc(collection(db, "products"), validProduct()));
         await assertSucceeds(setDoc(doc(db, "products", "p1"), { ...validProduct(), stockCount: 3 }));
         await assertSucceeds(deleteDoc(doc(db, "products", "p1")));
+    });
+
+    test("a signed-in non-admin cannot update a product (not only create or delete)", async () => {
+        await assertFails(updateDoc(doc(stranger().firestore(), "products", "p1"), { price: 1 }));
+        await assertFails(updateDoc(doc(anonymous().firestore(), "products", "p1"), { price: 1 }));
     });
 
     test("other collections are closed to everyone, admin included", async () => {
@@ -170,6 +175,11 @@ describe("firestore: product validation (admin writes)", () => {
     rejects("an unknown date type", (p) => ({ ...p, dateType: "XYZ" }));
     rejects("a malformed expiry date", (p) => ({ ...p, lastUseDate: "31/01/2030" }));
     rejects("a malformed price update date", (p) => ({ ...p, priceLastUpdate: "yesterday" }));
+    rejects("a month that does not exist", (p) => ({ ...p, lastUseDate: "2030-13-01" }));
+    rejects("a month 00", (p) => ({ ...p, lastUseDate: "2030-00-10" }));
+    rejects("a day that does not exist", (p) => ({ ...p, lastUseDate: "2030-01-32" }));
+    rejects("a day 00", (p) => ({ ...p, lastUseDate: "2030-01-00" }));
+    rejects("an impossible price update date", (p) => ({ ...p, priceLastUpdate: "9999-99-99" }));
     rejects("an empty price update date", (p) => ({ ...p, priceLastUpdate: "" }));
 
     rejects("a javascript: image URL", (p) => ({ ...p, image: "javascript:alert(1)" }));
@@ -186,6 +196,11 @@ describe("firestore: product validation (admin writes)", () => {
     }));
     accepts("an integer price", (p) => ({ ...p, price: 25 }));
     accepts("a custom category", (p) => ({ ...p, category: "Kırtasiye" }));
+    accepts("the first and last day of the year", (p) => ({
+        ...p,
+        lastUseDate: "2030-12-31",
+        priceLastUpdate: "2030-01-01"
+    }));
     accepts("zero stock", (p) => ({ ...p, stockCount: 0 }));
     accepts("TETT products", (p) => ({ ...p, dateType: "TETT" }));
     accepts("an http (emulator style) image URL", (p) => ({
@@ -247,6 +262,16 @@ describe("storage: product images", () => {
     test("nobody can write outside products/", async () => {
         await assertFails(uploadBytes(imageRef(admin(), "other/a.png"), bytes(10), { contentType: "image/png" }));
         await assertFails(uploadBytes(imageRef(admin(), "a.png"), bytes(10), { contentType: "image/png" }));
+    });
+
+    test("nobody but the admin can replace an image or change its type", async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+            await uploadBytes(imageRef(context), bytes(10), { contentType: "image/png" });
+        });
+        await assertFails(uploadBytes(imageRef(anonymous()), bytes(20), { contentType: "image/png" }));
+        await assertFails(uploadBytes(imageRef(stranger()), bytes(20), { contentType: "image/png" }));
+        await assertFails(updateMetadata(imageRef(stranger()), { contentType: "image/gif" }));
+        await assertFails(updateMetadata(imageRef(admin()), { contentType: "text/html" }));
     });
 
     test("only the admin can delete an image", async () => {

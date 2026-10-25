@@ -103,6 +103,33 @@ test("explains an unknown product", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Ürün Bulunamadı" })).toBeVisible();
 });
 
+test("an id that cannot be a product id is an unknown product, not a connection problem", async ({ page }) => {
+    for (const id of ["a/b", "..%2F..%2Fadmin", "%00"]) {
+        await page.goto(`/product/product.html?id=${id}`);
+        await expect(page.getByRole("heading", { name: "Ürün Bulunamadı" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Bağlantı Sorunu" })).toBeHidden();
+    }
+});
+
+test.describe("the animations of the low-stock badge and the coupon", () => {
+    const animationOf = (page, selector) =>
+        page.locator(selector).evaluate((element) => getComputedStyle(element).animationName);
+
+    test("run for a visitor who has no preference", async ({ page }) => {
+        await page.emulateMedia({ reducedMotion: "no-preference" });
+        await open(page, await addProduct({ stockCount: 3, lastUseDate: "2026-10-28" }));
+        expect(await animationOf(page, "#stock")).toBe("pulse-animation");
+        expect(await animationOf(page, "#coupon")).toBe("bounce");
+    });
+
+    test("do not run for a visitor who asked for less motion", async ({ page }) => {
+        await page.emulateMedia({ reducedMotion: "reduce" });
+        await open(page, await addProduct({ stockCount: 3, lastUseDate: "2026-10-28" }));
+        expect(await animationOf(page, "#stock")).toBe("none");
+        expect(await animationOf(page, "#coupon")).toBe("none");
+    });
+});
+
 test("explains a connection problem and recovers with Try again", async ({ page }) => {
     const id = await addProduct({ name: "Bağlantı testi" });
     await page.route("**://127.0.0.1:8080/**", (route) => route.abort());

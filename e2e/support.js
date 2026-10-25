@@ -17,7 +17,10 @@ export const NOW = new Date("2026-10-27T12:00:00+03:00");
  * blocks nothing (a violation would mean a script or style that the policy does not allow).
  */
 export const test = base.extend({
-    page: async ({ page }, use) => {
+    // Messages of page errors that a test provokes on purpose (a regular expression each); every other one fails the test
+    allowedPageErrors: [[], { option: true }],
+
+    page: async ({ page, allowedPageErrors }, use) => {
         await page.addInitScript(() => {
             window.__cspViolations = [];
             document.addEventListener("securitypolicyviolation", (event) => {
@@ -29,7 +32,8 @@ export const test = base.extend({
 
         await use(page);
 
-        expect(errors, "uncaught errors in the page").toEqual([]);
+        const unexpected = errors.filter((message) => !allowedPageErrors.some((pattern) => pattern.test(message)));
+        expect(unexpected, "uncaught errors in the page").toEqual([]);
         const violations = await page.evaluate(() => window.__cspViolations ?? []).catch(() => []);
         expect(violations, "Content Security Policy violations").toEqual([]);
     }
@@ -86,6 +90,25 @@ export async function storedProducts() {
         id: document.name.split("/").pop(),
         ...Object.fromEntries(Object.entries(document.fields).map(([key, value]) => [key, unwrap(value)]))
     }));
+}
+
+/** A 1 x 1 pixel PNG, the smallest picture that can be uploaded. */
+export const TINY_PNG = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "base64"
+);
+
+/** Creates a user in the Auth emulator (who is not the admin). Does nothing when the user exists already. */
+export async function createUser(username, password) {
+    const response = await fetch("http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: `${username}@qr-admin.local`, password, returnSecureToken: false })
+    });
+    const body = await response.json();
+    if (!response.ok && body?.error?.message !== "EMAIL_EXISTS") {
+        throw new Error(`Could not create the user ${username}: ${JSON.stringify(body)}`);
+    }
 }
 
 /** Opens the admin panel and signs in as the development admin. */
