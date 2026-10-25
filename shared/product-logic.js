@@ -107,6 +107,19 @@ export function nextPriceUpdateDate({ previousPrice, previousDate, newPrice, now
     return toDateString(now);
 }
 
+/**
+ * Milliseconds from `now` until the next midnight of the local calendar. The next day is worked out as a calendar day,
+ * so a day with a clock change (23 or 25 hours) is right too.
+ */
+export function msUntilNextMidnight(now = new Date()) {
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
+}
+
+/** True when data that was read at `loadedAt` (milliseconds) is older than `maxAgeMs` at `now`. */
+export function isStale(loadedAt, now, maxAgeMs) {
+    return now - loadedAt > maxAgeMs;
+}
+
 /** Returns the translation key of an error message for an unacceptable expiry date in the admin form, or null. */
 export function validateExpiryDate({ dateType, dateString, isNewProduct }, now = new Date()) {
     if (!dateString) return null;

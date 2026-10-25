@@ -1,6 +1,6 @@
 // The customer page that a QR code opens.
 
-import { test, expect, NOW, clearData, addProduct } from "./support.js";
+import { test, expect, NOW, clearData, addProduct, updateProductFields, removeProduct } from "./support.js";
 
 test.beforeEach(async ({ page }) => {
     await clearData();
@@ -147,4 +147,77 @@ test("never loads sign-in or file storage code (the customer page only reads)", 
     await open(page, await addProduct());
 
     expect(requests.filter((url) => /firebase-auth|firebase-storage|:9099|:9199/.test(url))).toEqual([]);
+});
+
+test.describe("a page that stays open", () => {
+    // what the browser does when a visitor comes back to the page (the tab, or the phone after the screen was locked)
+    const comeBack = async (page, minutesLater) => {
+        await page.clock.setFixedTime(new Date(NOW.getTime() + minutesLater * 60_000));
+        await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+    };
+
+    test("shows a change made meanwhile when the visitor comes back", async ({ page }) => {
+        const id = await addProduct({ price: 100, stockCount: 20 });
+        await open(page, id);
+        await expect(page.locator("#price")).toContainText("100,00 ₺");
+
+        await updateProductFields(id, { price: 200, stockCount: 0 });
+        await comeBack(page, 2);
+
+        await expect(page.locator("#price")).toContainText("200,00 ₺");
+        await expect(page.locator("#stock")).toHaveText("TÜKENDİ");
+    });
+
+    test("does not read the product again when the visitor comes back within a minute", async ({ page }) => {
+        const id = await addProduct({ price: 100 });
+        await open(page, id);
+
+        await updateProductFields(id, { price: 200 });
+        await comeBack(page, 0.5);
+        await page.waitForTimeout(700);
+
+        await expect(page.locator("#price")).toContainText("100,00 ₺");
+    });
+
+    test("says the product is gone when it was deleted meanwhile", async ({ page }) => {
+        const id = await addProduct();
+        await open(page, id);
+
+        await removeProduct(id);
+        await comeBack(page, 2);
+
+        await expect(page.getByRole("heading", { name: "Ürün Bulunamadı" })).toBeVisible();
+    });
+
+    test("works out the days left and the coupon again at midnight", async ({ page }) => {
+        await page.clock.setFixedTime(new Date("2026-10-27T23:59:59.500+03:00"));
+        await open(page, await addProduct({ lastUseDate: "2026-10-27", price: 100 }));
+        await expect(page.locator("#lastUseDate")).toContainText("Bugün son gün");
+        await expect(page.getByText("Sürdürülebilirlik Fırsatı!")).toBeVisible();
+
+        // midnight passes: the page notices a second after it
+        await page.clock.setFixedTime(new Date("2026-10-28T00:00:30+03:00"));
+        await expect(page.locator("#lastUseDate")).toContainText("Tarihi Geçti");
+        await expect(page.getByText("Sürdürülebilirlik Fırsatı!")).toBeHidden();
+    });
+});
+
+test("needs no sideways scrolling at 320 px with text twice as big", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await open(
+        page,
+        await addProduct({
+            name: "A".repeat(70),
+            price: 1000000,
+            category: "Temizlik Malzemeleri",
+            description: "B".repeat(300)
+        })
+    );
+    await page.evaluate(() => {
+        document.documentElement.style.fontSize = "200%";
+    });
+    const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
 });

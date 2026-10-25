@@ -11,7 +11,9 @@ import {
     formatPrice,
     formatDate,
     categoryKey,
-    isValidProductId
+    isValidProductId,
+    msUntilNextMidnight,
+    isStale
 } from "../shared/product-logic.js";
 
 // The date logic must give the same answers wherever the visitor is, so the date tests run in
@@ -179,6 +181,18 @@ for (const zone of TIME_ZONES) {
             assert.equal(formatDate("", "en"), null);
         });
 
+        run("msUntilNextMidnight counts to the next local midnight, also on days with a clock change", () => {
+            const hour = 60 * 60 * 1000;
+            assert.equal(msUntilNextMidnight(at(2026, 10, 25, 23, 59, 59)), 1000);
+            assert.equal(msUntilNextMidnight(at(2026, 10, 26, 12, 0, 0)), 12 * hour);
+            // Berlin: the clocks go back on 25 Oct 2026 (a 25 hour day) and forward on 29 Mar 2026 (a 23 hour day)
+            assert.equal(msUntilNextMidnight(at(2026, 10, 25, 0, 0, 0)), (zone === "Europe/Berlin" ? 25 : 24) * hour);
+            assert.equal(msUntilNextMidnight(at(2026, 3, 29, 0, 0, 0)), (zone === "Europe/Berlin" ? 23 : 24) * hour);
+            // the last day of a month and of a year
+            assert.equal(msUntilNextMidnight(at(2026, 12, 31, 23, 0, 0)), hour);
+            assert.equal(msUntilNextMidnight(at(2028, 2, 28, 23, 0, 0)), hour); // 2028 is a leap year: 29 Feb follows
+        });
+
         run("isValidProductId accepts Firestore ids and refuses what cannot be one", () => {
             for (const id of ["abc", "2-milk", "Zx9Q3pLmN0aB1cD2eF3g", "süt", "a.b", "..a", "a..", "_a_"]) {
                 assert.equal(isValidProductId(id), true, id);
@@ -325,5 +339,14 @@ describe("formatPrice", () => {
             assert.equal(formatPrice(bad), "—", String(bad));
             assert.equal(formatPrice(bad, "en"), "—", String(bad));
         }
+    });
+});
+
+describe("isStale", () => {
+    test("data is stale once it is older than the given age", () => {
+        assert.equal(isStale(1000, 1000, 60_000), false);
+        assert.equal(isStale(1000, 61_000, 60_000), false); // exactly as old as allowed
+        assert.equal(isStale(1000, 61_001, 60_000), true);
+        assert.equal(isStale(0, 5000, 60_000), false);
     });
 });
