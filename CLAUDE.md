@@ -34,7 +34,8 @@ Hobby / portfolio project, meant to be downloaded and run on a local network by 
 
 ```
 admin/      admin panel: admin_script.js only wires modules (auth-ui, product-list, product-form, qr-modal);
-            firebase-admin.js (Auth/Storage), product-images, upload/username helpers, list-logic (pure), qr.js (wrapper)
+            firebase-admin.js (Auth/Storage), product-images, site-settings (Firestore settings/site), upload/username helpers,
+            list-logic and qr-logic (pure), qr.js (wrapper)
 product/    customer-facing product page
 shared/     code used by both pages (Firebase app + Firestore init, config, safe DOM helpers,
             product-logic.js = pure date/stock/discount/price logic, store-config.js = discount and stock settings)
@@ -83,9 +84,10 @@ Work proceeds phase by phase, one commit series per phase. Before each phase, de
 - [x] **Phase 1 - Security:** username/password login (Firebase Auth, single admin), Firestore and Storage rules with validation, XSS fixes, upload limits.
 - [x] **Phase 2 - Correctness:** pure date/stock/discount functions with `node:test` tests, error handling, fix `priceLastUpdate` (only change when the price changes), discount settings in one config.
 - [x] **Phase 3 - Structure:** remove inline `onclick` handlers and `window.*` assignments, separate the customer page from admin code.
-- [ ] **Phase 4 - UI:** responsive admin, QR download/print and a "site address" field (so QR codes work on a LAN), toasts and loading states, accessibility, image downscaling, TR/EN.
+- [x] **Phase 4a - Usability:** responsive admin (phones/tablets), long names and missing images on the customer page, QR site-address setting (Firestore `settings/site`), QR PNG download and print.
+- [ ] **Phase 4b - Polish:** toasts and loading states, accessibility, image downscaling before upload, TR/EN.
 - [ ] **Phase 5 - Quality:** ESLint/Prettier, rules tests against the emulator, README and screenshots.
 
 ## Known issues being worked on
 
-See the roadmap above. The most important ones now: the QR code base URL is hard-coded in `admin/qr-modal.js`, the admin layout is desktop only, a product without an image shows a broken image on the customer page, and very long unbroken product names overflow.
+See the roadmap above. The most important ones now: form fields have no labels (only placeholders) and the QR window has no keyboard/screen-reader support, photos from a phone are often over the 2 MB upload limit, and there are no success messages or loading indicators (phase 4b).
