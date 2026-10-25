@@ -28,7 +28,8 @@ The admin panel provides a single-page interface for managing products.
 - Paginate product cards
 - Upload product images
 - Display uploaded product images
-- Generate QR codes for products
+- Generate QR codes for products, download them as PNG or print them
+- Works on phones and tablets (the form moves above the list)
 - Manage product categories
 - Manage product prices
 - Manage product descriptions
@@ -122,10 +123,12 @@ Each product can have a QR code generated from its product-specific URL.
 
 The generated URL follows the general structure:
 
-`https://your-domain.com/product/product.html?id=PRODUCT_ID`
+`SITE_ADDRESS/product/product.html?id=PRODUCT_ID`
 
-**Note on Local Development & Mobile Testing:**  
-When running the project locally (e.g., via Live Server), smartphone cameras cannot resolve `localhost`. To scan and test QR codes on a physical device over the same local network, replace `SITE_URL` in `admin/qr-modal.js` with your computer's local IPv4 address (e.g., `http://192.168.1.X:5500/product/product.html?id=PRODUCT_ID`).
+The QR window shows the product name, price and the code, and offers **PNG indir** (download the code as an image) and **Yazdır** (print: only the name, price, code and address are printed).
+
+**Site address (local network and mobile testing):**  
+`SITE_ADDRESS` is the address customers reach the pages at. It is set in the QR window itself ("Site adresi") and saved in Firestore (`settings/site`, readable and writable only by the admin), so it is the same on every device. Until one is saved, the address the admin page was opened from is used. When that is `localhost` or `127.0.0.1`, the window warns you: a smartphone cannot reach those addresses, so enter your computer's network address instead (e.g. `http://192.168.1.20:5000`) and press **Kaydet**. Existing QR codes already printed with another address keep pointing to it; only newly shown codes use the new one.
 
 When the QR code is scanned, the product ID is read from the URL and the corresponding product information is loaded dynamically.
 
@@ -168,7 +171,7 @@ QR codes are generated dynamically from product-specific URLs.
 
 The project is separated into two main user-facing areas:
 
-* `admin/` — Product management interface. `admin_script.js` only wires small modules together: `auth-ui.js` (login), `product-list.js` (cards, search, paging, delete), `product-form.js` (add / edit), `qr-modal.js` (QR window), plus helpers for image upload and the pure list logic.
+* `admin/` — Product management interface. `admin_script.js` only wires small modules together: `auth-ui.js` (login), `product-list.js` (cards, search, paging, delete), `product-form.js` (add / edit), `qr-modal.js` (QR window: address, download, print), `site-settings.js` (the saved site address), plus helpers for image upload and the pure list and QR logic.
 * `product/` — Customer-facing product page
 
 * `shared/` — Code used by both areas (Firebase initialisation and configuration, safe DOM helpers, the pure date / stock / discount logic and the store settings)
@@ -249,6 +252,7 @@ What the rules enforce:
 * Anyone may read a single product (this is what the QR code opens), but only the admin may list, create, change or delete products.
 * A product must have exactly the fields in the table below, with sane types and sizes (name 2–70 characters, price above 0, whole-number stock, dates as `YYYY-MM-DD`, `SKT` or `TETT`, image URL starting with `http(s)://`).
 * Only the admin may upload images; only JPEG, PNG, WebP and GIF up to 2 MB are accepted (SVG is rejected on purpose, it can carry scripts).
+* The only other document is `settings/site` (the QR site address): the admin can read and write it, nobody else, and it must be an `http(s)://` address.
 
 The application expects a Firestore collection named:
 
@@ -396,6 +400,8 @@ The core functionality of the project has been implemented.
 * Firebase Storage image upload
 * Dynamic product page
 * QR code generation
+* QR download (PNG) and printing
+* Configurable site address for QR codes, shared by all devices
 * Product-specific QR URLs
 * Numerical stock management
 * Stock status visualization
@@ -403,7 +409,8 @@ The core functionality of the project has been implemented.
 * Expiry date calculation
 * Price update date
 * Expiry-based promotional logic
-* Responsive customer interface
+* Responsive customer interface (long names wrap, a missing image shows a placeholder)
+* Responsive admin panel for phones and tablets
 * Separate admin and customer page structures
 * Local frontend assets (Bootstrap, Bootstrap Icons and the QR library are included; only the Firebase SDK is loaded from Google's CDN)
 

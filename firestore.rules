@@ -47,6 +47,19 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Store-wide settings. Only the admin may read or write them, and only one document exists:
+    // settings/site, the address that QR codes point to (so it is the same on every device).
+    match /settings/{settingId} {
+      allow get: if isAdmin() && settingId == 'site';
+      allow create, update: if isAdmin() && settingId == 'site'
+                            && request.resource.data.keys().hasOnly(['siteUrl'])
+                            && request.resource.data.siteUrl is string
+                            && request.resource.data.siteUrl.size() >= 8
+                            && request.resource.data.siteUrl.size() <= 200
+                            && request.resource.data.siteUrl.matches('^https?://[^ ]+$');
+      allow delete: if isAdmin() && settingId == 'site';
+    }
+
     // Everything else is denied by default.
   }
 }

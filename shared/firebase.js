@@ -13,7 +13,8 @@ import {
   deleteDoc,
   doc,
   updateDoc,
-  getDoc
+  getDoc,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
 // The config file is git-ignored and created by the person who sets the project up.
@@ -47,5 +48,6 @@ export {
   deleteDoc,
   doc,
   updateDoc,
-  getDoc
+  getDoc,
+  setDoc
 };
